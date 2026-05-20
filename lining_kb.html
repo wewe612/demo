@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>李宁｜品牌服务知识库</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --red: #D0021B;
+    --red-light: #fff0f0;
+    --dark: #1a1a1a;
+    --mid: #444;
+    --muted: #888;
+    --border: #e8e8e8;
+    --bg: #f7f7f7;
+    --white: #fff;
+    --yellow: #F5A623;
+    --green: #4CAF50;
+    --blue: #1976D2;
+  }
+  body { font-family: 'PingFang SC', 'Helvetica Neue', sans-serif; background: var(--bg); color: var(--dark); }
+
+  /* Header */
+  .header {
+    background: var(--dark);
+    color: white;
+    padding: 32px 40px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, #1a1a1a 60%, #3a0008 100%);
+  }
+  .header-inner { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: flex-end; }
+  .brand-tag { font-size: 11px; letter-spacing: 2px; color: var(--red); font-weight: 600; text-transform: uppercase; margin-bottom: 6px; }
+  .brand-title { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; }
+  .brand-sub { font-size: 14px; color: #aaa; margin-top: 4px; }
+  .header-meta { text-align: right; font-size: 12px; color: #888; }
+  .status-badge { display: inline-block; background: var(--red); color: white; font-size: 11px; padding: 3px 10px; border-radius: 20px; margin-bottom: 6px; }
+
+  /* Nav tabs */
+  .nav { background: white; border-bottom: 1px solid var(--border); padding: 0 40px; display: flex; gap: 0; overflow-x: auto; }
+  .nav-item { padding: 14px 20px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: all .2s; }
+  .nav-item.active { color: var(--red); border-bottom-color: var(--red); }
+  .nav-item:hover { color: var(--dark); }
+
+  /* Sections */
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 40px; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* Cards */
+  .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; border: 1px solid var(--border); }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .card-title .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); }
+
+  /* Overview grid */
+  .overview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+  .metric-card { background: white; border-radius: 10px; padding: 20px; border: 1px solid var(--border); }
+  .metric-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .metric-value { font-size: 15px; font-weight: 600; color: var(--dark); }
+  .metric-card.highlight { background: var(--red); border-color: var(--red); }
+  .metric-card.highlight .metric-label { color: rgba(255,255,255,0.7); }
+  .metric-card.highlight .metric-value { color: white; }
+
+  /* Priority tags */
+  .tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+  .tag-high { background: #fde8ea; color: var(--red); }
+  .tag-mid { background: #fff3e0; color: #e65100; }
+  .tag-low { background: #e8f5e9; color: #2e7d32; }
+  .tag-pending { background: #e3f2fd; color: var(--blue); }
+  .tag-active { background: #e8f5e9; color: #2e7d32; }
+  .tag-wait { background: #fafafa; color: #888; border: 1px solid #ddd; }
+
+  /* Status dot */
+  .sdot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; }
+  .sdot-green { background: #4CAF50; }
+  .sdot-yellow { background: var(--yellow); }
+  .sdot-red { background: var(--red); }
+  .sdot-grey { background: #ccc; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px 12px; font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; border-bottom: 2px solid var(--border); background: #fafafa; }
+  td { padding: 12px 12px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.5; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafafa; }
+
+  /* Opportunity rows */
+  .opp-row { display: flex; gap: 12px; align-items: flex-start; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .opp-row:last-child { border-bottom: none; }
+  .opp-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .opp-body { flex: 1; }
+  .opp-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .opp-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .opp-footer { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+
+  /* Action list */
+  .action-item { display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
+  .action-item:last-child { border-bottom: none; }
+  .action-num { width: 28px; height: 28px; border-radius: 50%; background: var(--red); color: white; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .action-num.grey { background: #e0e0e0; color: #888; }
+  .action-content { flex: 1; }
+  .action-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .action-why { font-size: 12px; color: var(--muted); margin-bottom: 6px; line-height: 1.5; }
+  .action-output { font-size: 12px; background: #f5f5f5; padding: 6px 10px; border-radius: 6px; color: var(--mid); }
+  .action-output span { font-weight: 600; color: var(--dark); }
+
+  /* Risk */
+  .risk-bar { display: flex; gap: 4px; margin-bottom: 16px; }
+  .risk-seg { height: 6px; border-radius: 3px; flex: 1; }
+
+  /* People */
+  .person-card { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border-radius: 8px; background: #fafafa; margin-bottom: 10px; }
+  .avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: white; flex-shrink: 0; }
+  .person-name { font-size: 14px; font-weight: 600; }
+  .person-role { font-size: 12px; color: var(--muted); }
+  .person-resp { font-size: 12px; color: var(--mid); margin-top: 4px; }
+
+  /* Progress */
+  .prog-wrap { background: #eee; border-radius: 10px; height: 6px; overflow: hidden; }
+  .prog-bar { height: 100%; border-radius: 10px; background: var(--red); }
+
+  /* Update log */
+  .log-item { display: flex; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .log-item:last-child { border-bottom: none; }
+  .log-date { font-size: 12px; color: var(--muted); min-width: 90px; padding-top: 2px; }
+  .log-content { font-size: 13px; line-height: 1.6; }
+
+  /* Risk card */
+  .risk-card { border-left: 3px solid; padding: 14px 16px; border-radius: 0 8px 8px 0; background: white; margin-bottom: 12px; border-color: var(--border); }
+  .risk-card.high { border-left-color: var(--red); background: #fff8f8; }
+  .risk-card.mid { border-left-color: var(--yellow); background: #fffaf0; }
+  .risk-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; }
+  .risk-detail { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .risk-action { font-size: 12px; margin-top: 8px; padding: 6px 10px; background: rgba(0,0,0,0.04); border-radius: 6px; color: var(--mid); }
+
+  /* Q section */
+  .q-item { padding: 14px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px; background: white; }
+  .q-question { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .q-why { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .q-ask { font-size: 12px; background: #f0f4ff; color: var(--blue); padding: 6px 10px; border-radius: 6px; font-style: italic; }
+
+  @media (max-width: 700px) {
+    .overview-grid { grid-template-columns: 1fr 1fr; }
+    .container { padding: 20px 16px; }
+    .header { padding: 24px 16px 18px; }
+    .nav { padding: 0 12px; }
+    .header-inner { flex-direction: column; align-items: flex-start; gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div>
+      <div class="brand-tag">Brand Knowledge Base</div>
+      <div class="brand-title">李宁</div>
+      <div class="brand-sub">品牌服务知识库 · 运动服饰 / 运动用品</div>
+    </div>
+    <div class="header-meta">
+      <div class="status-badge">● Active</div>
+      <div>最近更新：2026-05-19</div>
+      <div style="margin-top:4px">618 大促监控阶段</div>
+    </div>
+  </div>
+</div>
+
+<div class="nav" id="nav">
+  <div class="nav-item active" onclick="switchTab('overview')">总览</div>
+  <div class="nav-item" onclick="switchTab('people')">关键联系人</div>
+  <div class="nav-item" onclick="switchTab('opps')">商机与风险</div>
+  <div class="nav-item" onclick="switchTab('actions')">PM 行动清单</div>
+  <div class="nav-item" onclick="switchTab('questions')">待确认问题</div>
+  <div class="nav-item" onclick="switchTab('principles')">长期原则</div>
+</div>
+
+<!-- ===== OVERVIEW ===== -->
+<div class="container">
+<div class="section active" id="s-overview">
+  <div class="overview-grid">
+    <div class="metric-card highlight">
+      <div class="metric-label">当前核心优先级</div>
+      <div class="metric-value">618 每日监控</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">业务阶段</div>
+      <div class="metric-value">618 大促 + 下半年规划并行</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">当前商机数</div>
+      <div class="metric-value">5 个（3 高优 · 2 中优）</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">高风险项</div>
+      <div class="metric-value" style="color:var(--red)">3 项待处理</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">PM 行动待办</div>
+      <div class="metric-value">5 项（1 项立即 · 2 项本周）</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">待确认问题</div>
+      <div class="metric-value">6 项全部待提问</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>当前核心目标</div>
+    <p style="font-size:14px;line-height:1.8;color:var(--mid)">
+      优先完成 618 每日监控，同步推进 <strong style="color:var(--dark)">短视频监控看板</strong>、<strong style="color:var(--dark)">单品监控看板</strong> 开发前准备，以及 <strong style="color:var(--dark)">下半年直播间目标拆解</strong>（等待 6 月第一周销售目标输出后启动）。
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>当前主要问题</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <span style="background:#fde8ea;color:var(--red);padding:6px 14px;border-radius:20px;font-size:13px">数据口径一致性</span>
+      <span style="background:#fde8ea;color:var(--red);padding:6px 14px;border-radius:20px;font-size:13px">诊断基准可信度</span>
+      <span style="background:#fff3e0;color:#e65100;padding:6px 14px;border-radius:20px;font-size:13px">短视频消耗数据完整性</span>
+      <span style="background:#fff3e0;color:#e65100;padding:6px 14px;border-radius:20px;font-size:13px">内容到商品承接口径</span>
+      <span style="background:#f3f3f3;color:#555;padding:6px 14px;border-radius:20px;font-size:13px">自动化诊断边界</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>阶段关注事项</div>
+    <table>
+      <thead><tr><th>关注事项</th><th>适用场景</th><th>状态</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>618 每日监控最高优先级</strong></td>
+          <td>618 大促期间</td>
+          <td><span class="sdot sdot-green"></span><span style="font-size:12px">当前有效</span></td>
+        </tr>
+        <tr>
+          <td><strong>短视频看板开发前补齐字段</strong></td>
+          <td>原型评审后至排期前</td>
+          <td><span class="sdot sdot-green"></span><span style="font-size:12px">当前有效</span></td>
+        </tr>
+        <tr>
+          <td><strong>单品看板从指标推进到原型</strong></td>
+          <td>下一轮评审前</td>
+          <td><span class="sdot sdot-green"></span><span style="font-size:12px">当前有效</span></td>
+        </tr>
+        <tr>
+          <td><strong>下半年规划等待目标输出</strong></td>
+          <td>预计 6 月第一周后</td>
+          <td><span class="sdot sdot-yellow"></span><span style="font-size:12px">待复核</span></td>
+        </tr>
+        <tr>
+          <td><strong>搜索模块竞品局部试点</strong></td>
+          <td>搜索心智模块优化</td>
+          <td><span class="sdot sdot-green"></span><span style="font-size:12px">当前有效</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== PEOPLE ===== -->
+<div class="section" id="s-people">
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>关键联系人（2026-05-19 会议）</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px">⚠ 当前仅有说话人编号，真实姓名与所属方待确认</p>
+
+    <div class="person-card">
+      <div class="avatar" style="background:#D0021B">1</div>
+      <div>
+        <div class="person-name">说话人 1</div>
+        <div class="person-role">看板方案讲解方 / 产品推进方 · 执行接口人</div>
+        <div class="person-resp">负责：短视频监控看板、单品监控看板产品设计与技术排期沟通</div>
+        <div style="margin-top:6px"><span class="tag tag-active">活跃</span></div>
+      </div>
+    </div>
+
+    <div class="person-card">
+      <div class="avatar" style="background:#1976D2">2</div>
+      <div>
+        <div class="person-name">说话人 2</div>
+        <div class="person-role">业务需求方 · 强影响人</div>
+        <div class="person-resp">负责：数据可用性、指标定义、618 监控、下半年规划</div>
+        <div style="margin-top:6px;font-size:12px;color:var(--muted)">关注看板是否能支持业务决策和高时效反馈</div>
+        <div style="margin-top:6px"><span class="tag tag-active">活跃</span></div>
+      </div>
+    </div>
+
+    <div class="person-card">
+      <div class="avatar" style="background:#388E3C">3</div>
+      <div>
+        <div class="person-name">说话人 3</div>
+        <div class="person-role">业务 / 数据评审方 · 强影响人</div>
+        <div class="person-resp">负责：基准值、目标值、竞品对比、诊断逻辑</div>
+        <div style="margin-top:6px;font-size:12px;color:var(--muted)">关注诊断口径能否被业务认可</div>
+        <div style="margin-top:6px"><span class="tag tag-active">活跃</span></div>
+      </div>
+    </div>
+
+    <div class="person-card">
+      <div class="avatar" style="background:#7B1FA2">4</div>
+      <div>
+        <div class="person-name">说话人 4</div>
+        <div class="person-role">业务策略方 · 强影响人</div>
+        <div class="person-resp">负责：直播间目标拆解、品类规划、人群需求、执行路径</div>
+        <div style="margin-top:6px;font-size:12px;color:var(--muted)">关注从直播间目标反推品类、单品、人群和动作</div>
+        <div style="margin-top:6px"><span class="tag tag-active">活跃</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== OPPS ===== -->
+<div class="section" id="s-opps">
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title"><span class="dot"></span>当前重点商机</div>
+    <div class="opp-row">
+      <div class="opp-icon" style="background:#fde8ea">📊</div>
+      <div class="opp-body">
+        <div class="opp-title">618 每日监控看板 / 每日反馈机制</div>
+        <div class="opp-desc">618 期间需要竞品、行业、人群和异常爆发的高时效监控，今年平台整体偏疲软</div>
+        <div class="opp-footer"><span class="tag tag-high">高优</span><span style="font-size:12px;color:var(--muted)">推进中</span></div>
+      </div>
+    </div>
+    <div class="opp-row">
+      <div class="opp-icon" style="background:#fff3e0">🎬</div>
+      <div class="opp-body">
+        <div class="opp-title">短视频监控看板开发</div>
+        <div class="opp-desc">按商品、账号、挂车状态、中类等维度监控短视频表现。原型已认可，待补字段和数据匹配</div>
+        <div class="opp-footer"><span class="tag tag-high">高优</span><span style="font-size:12px;color:var(--muted)">推进中</span></div>
+      </div>
+    </div>
+    <div class="opp-row">
+      <div class="opp-icon" style="background:#e8f5e9">🏷️</div>
+      <div class="opp-body">
+        <div class="opp-title">单品监控看板升级</div>
+        <div class="opp-desc">从营销端、搜索心智、EC 承接、售后口碑定位单品链路问题。已确认 1 总览 + 4 下钻框架</div>
+        <div class="opp-footer"><span class="tag tag-high">高优</span><span style="font-size:12px;color:var(--muted)">推进中</span></div>
+      </div>
+    </div>
+    <div class="opp-row">
+      <div class="opp-icon" style="background:#e3f2fd">🔍</div>
+      <div class="opp-body">
+        <div class="opp-title">搜索承接效率竞品参考分析</div>
+        <div class="opp-desc">对比竞品搜索效率，要求口径一致。先在搜索模块做局部参考，降低全看板自动化难度</div>
+        <div class="opp-footer"><span class="tag tag-mid">中优</span><span style="font-size:12px;color:var(--muted)">待推进</span></div>
+      </div>
+    </div>
+    <div class="opp-row">
+      <div class="opp-icon" style="background:#f3e8ff">📅</div>
+      <div class="opp-body">
+        <div class="opp-title">下半年直播间目标拆解与品类策略</div>
+        <div class="opp-desc">重点品类：外套、户外鞋 / 拖鞋、越野跑相关。等待 6 月第一周业务方输出销售目标</div>
+        <div class="opp-footer"><span class="tag tag-mid">中优</span><span style="font-size:12px;color:var(--muted)">暂缓</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>当前重点风险</div>
+
+    <div class="risk-card high">
+      <div class="risk-title">多数据源口径不一致 <span class="tag tag-high">高风险</span></div>
+      <div class="risk-detail">云图、抖店罗盘、千川、飞瓜等多源数据口径不一致，影响业务对看板勾 / 叉和竞品对比的信任</div>
+      <div class="risk-action">→ 每个关键指标标注数据源、口径、是否可与竞品对比 · <strong>待处理</strong></div>
+    </div>
+    <div class="risk-card high">
+      <div class="risk-title">短视频挂车消耗数据不完整 <span class="tag tag-high">高风险</span></div>
+      <div class="risk-detail">消耗数据主要来自抖店罗盘，挂车短视频消耗数据不完整，影响投放效率和账号效率判断</div>
+      <div class="risk-action">→ 研究千川短视频 ID 与罗盘数据匹配，无法匹配则标注缺口 · <strong>待处理</strong></div>
+    </div>
+    <div class="risk-card high">
+      <div class="risk-title">618 监控初版交付延迟 <span class="tag tag-high">高风险</span></div>
+      <div class="risk-detail">会议要求明天 / 后天优先完成 618 每日监控看板初版，延迟将影响 618 高时效反馈和业务信任</div>
+      <div class="risk-action">→ 将 618 监控置于最高优先级，先出可用初版 · <strong>待处理</strong></div>
+    </div>
+    <div class="risk-card mid">
+      <div class="risk-title">单品诊断基准过于简单导致误判 <span class="tag tag-mid">中风险</span></div>
+      <div class="risk-detail">只用前四周均值作为唯一基准被否定，新品、换代、大促周期下容易误判异常</div>
+      <div class="risk-action">→ 加入目标值、上一代系、环比趋势和竞品参考 · <strong>处理中</strong></div>
+    </div>
+    <div class="risk-card mid">
+      <div class="risk-title">自动化看板覆盖不了内容和人群判断 <span class="tag tag-mid">中风险</span></div>
+      <div class="risk-detail">人群画像、卖点准确性、评论词与搜索词一致性等难以完全自动化，业务可能期望过高</div>
+      <div class="risk-action">→ 看板定位为"线索 + 预警"，复杂判断保留人工分析 · <strong>观察中</strong></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ACTIONS ===== -->
+<div class="section" id="s-actions">
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>PM 行动清单</div>
+
+    <div class="action-item">
+      <div class="action-num">1</div>
+      <div class="action-content">
+        <div class="action-title">🔴 产出 618 每日监控看板初版，建立每日反馈机制</div>
+        <div class="action-why">会议明确当前最高优先级，今年 618 平台偏疲软，需要每日追踪竞品声量、爆发单品、行业变化、人群变化和异常投放动作</div>
+        <div class="action-output"><span>产出物：</span>618 每日监控看板初版 + 每日反馈模板 &nbsp;|&nbsp; <span>协同：</span>说话人1团队、业务方、数据支持方 &nbsp;|&nbsp; <span>状态：</span>未开始</div>
+      </div>
+    </div>
+
+    <div class="action-item">
+      <div class="action-num">2</div>
+      <div class="action-content">
+        <div class="action-title">🟠 完成短视频监控看板开发前调整清单与技术排期确认</div>
+        <div class="action-why">方向已被认可，需补中类、下载按钮、挂车区分、SPU 货号维护，并确认千川 ID 匹配可行性</div>
+        <div class="action-output"><span>产出物：</span>短视频看板修改清单 + 技术排期反馈 &nbsp;|&nbsp; <span>协同：</span>说话人1、技术、数据 &nbsp;|&nbsp; <span>状态：</span>未开始</div>
+      </div>
+    </div>
+
+    <div class="action-item">
+      <div class="action-num">3</div>
+      <div class="action-content">
+        <div class="action-title">🟡 输出单品监控看板页面原型和诊断基准方案</div>
+        <div class="action-why">业务已认可"1 总览 + 4 下钻"框架，但诊断逻辑必须升级到目标值、上一代系、环比和竞品参考</div>
+        <div class="action-output"><span>产出物：</span>单品监控看板页面原型 + 诊断规则说明 &nbsp;|&nbsp; <span>协同：</span>说话人1、业务方、技术 &nbsp;|&nbsp; <span>状态：</span>未开始</div>
+      </div>
+    </div>
+
+    <div class="action-item">
+      <div class="action-num" style="background:#888">4</div>
+      <div class="action-content">
+        <div class="action-title">🔵 持续跟踪数据口径一致性和自动化边界</div>
+        <div class="action-why">多模块依赖云图、罗盘、千川、飞瓜，不一致会削弱诊断可信度，部分内容判断难以自动化</div>
+        <div class="action-output"><span>产出物：</span>关键指标口径表 &nbsp;|&nbsp; <span>协同：</span>数据、业务方、说话人1 &nbsp;|&nbsp; <span>状态：</span>未开始</div>
+      </div>
+    </div>
+
+    <div class="action-item">
+      <div class="action-num" style="background:#bbb">5</div>
+      <div class="action-content">
+        <div class="action-title">⏸ 等待下半年销售目标，准备目标拆解框架</div>
+        <div class="action-why">业务方预计 6 月第一周输出下半年销售目标，应从直播间目标出发，拆解品类、单品和人群</div>
+        <div class="action-output"><span>产出物：</span>直播间目标拆解模板 &nbsp;|&nbsp; <span>协同：</span>业务方、说话人4 &nbsp;|&nbsp; <span>状态：</span>等待外部</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== QUESTIONS ===== -->
+<div class="section" id="s-questions">
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>待确认问题（6 项全部待提问）</div>
+
+    <div class="q-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="q-question">参会角色的真实姓名、所属方和决策关系是什么？</div>
+        <span class="tag tag-high">高优</span>
+      </div>
+      <div class="q-why">当前只有说话人编号，影响联系人维护和决策链判断</div>
+      <div class="q-ask">问会议组织者："这次会议中的说话人1-4分别是谁？哪些属于品牌方，谁能拍板需求优先级？"</div>
+    </div>
+
+    <div class="q-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="q-question">618 每日监控的固定交付格式和反馈渠道是什么？</div>
+        <span class="tag tag-high">高优</span>
+      </div>
+      <div class="q-why">会影响初版结构和每日执行节奏</div>
+      <div class="q-ask">问业务需求方："618 每日监控希望几点、通过什么形式反馈？核心必须包含哪些字段？"</div>
+    </div>
+
+    <div class="q-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="q-question">短视频消耗数据能否通过千川 ID 与罗盘数据匹配？</div>
+        <span class="tag tag-high">高优</span>
+      </div>
+      <div class="q-why">决定短视频看板是否能完整评估挂车视频投放效率</div>
+      <div class="q-ask">问技术 / 数据："千川短视频 ID 与罗盘数据能否稳定匹配？不能时有哪些替代口径？"</div>
+    </div>
+
+    <div class="q-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="q-question">单品监控看板的目标值由谁输入，粒度到什么级别？</div>
+        <span class="tag tag-high">高优</span>
+      </div>
+      <div class="q-why">决定总览诊断勾 / 叉逻辑能否落地</div>
+      <div class="q-ask">问业务方："目标值是业务人工输入还是运营计划导入？粒度到品类、SPU 还是直播间？"</div>
+    </div>
+
+    <div class="q-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="q-question">搜索模块竞品参考使用哪个数据源，如何保证同口径？</div>
+        <span class="tag tag-high">高优</span>
+      </div>
+      <div class="q-why">决定竞品对比是否有决策价值</div>
+      <div class="q-ask">问数据 / 业务评审方："竞品搜索数据来自云图、罗盘还是其他？自有数据是否能同口径取数？"</div>
+    </div>
+
+    <div class="q-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="q-question">下半年直播间销售目标预计何时、由谁输出？</div>
+        <span class="tag tag-mid">中优</span>
+      </div>
+      <div class="q-why">影响下半年品类、人群和执行动作拆解启动时间</div>
+      <div class="q-ask">问说话人4："6 月第一周下半年销售目标由谁确认？会按直播间、品类还是单品拆分？"</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PRINCIPLES ===== -->
+<div class="section" id="s-principles">
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>长期偏好</div>
+    <table>
+      <thead><tr><th>结论</th><th>置信度</th><th>对服务动作的影响</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>更偏好能直接支撑业务决策的看板</strong>，而不是只展示数据的报表。总览勾 / 叉逻辑必须让业务方认可</td>
+          <td><span class="tag tag-mid">中</span></td>
+          <td>看板设计必须解释异常原因、对应动作和业务判断价值</td>
+        </tr>
+        <tr>
+          <td><strong>更偏好按商品、品类、账号、直播间等业务维度下钻分析</strong>，不只看大盘汇总</td>
+          <td><span class="tag tag-mid">中</span></td>
+          <td>输出方案要保留可下钻维度</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>长期禁忌</div>
+    <table>
+      <thead><tr><th>结论</th><th>服务中应避免什么</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>❌ 不能在竞品 / 行业对比中<strong>混用不一致的数据口径</strong></td>
+          <td>不要直接把云图、罗盘、千川、飞瓜等不同来源指标混放成确定结论</td>
+        </tr>
+        <tr>
+          <td>❌ 不能把难以自动化的内容判断<strong>包装成完全自动诊断</strong></td>
+          <td>自动化看板应提供线索和预警，不应替代人工业务判断</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>长期判断标准</div>
+    <table>
+      <thead><tr><th>判断标准</th><th>对执行的影响</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>诊断基准需结合<strong>目标值、上一代系、环比趋势和竞品参考</strong>，不能只依赖前四周均值</td>
+          <td>先说明基准来源和适用场景，再输出勾 / 叉判断</td>
+        </tr>
+        <tr>
+          <td><strong>搜索承接效率</strong>是评估内容种草与商品成交链路的重要指标</td>
+          <td>搜索模块方案应突出搜索后成交、承接和词贡献</td>
+        </tr>
+        <tr>
+          <td>内容到商品承接要<strong>统一人数 / 次数口径</strong></td>
+          <td>设计 EC 承接指标时必须先统一分子分母口径</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>更新记录</div>
+    <div class="log-item">
+      <div class="log-date">2026-05-19</div>
+      <div class="log-content">
+        <strong>新建知识库主文档</strong>，来源：2026-05-19_1930 会议记录。<br>
+        沉淀 618 每日监控、短视频监控看板、单品监控看板、搜索承接效率、下半年直播间目标拆解等当前重点。<br>
+        <span style="color:var(--red)">阶段变化：</span>最高优先级从下半年策略前置规划转向 618 每日监控。
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+function switchTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
