@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小度｜品牌服务知识库</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --brand: #0057FF; --brand-light: #e8f0ff;
+    --dark: #1a1a1a; --mid: #444; --muted: #888;
+    --border: #e8e8e8; --bg: #f7f7f7; --white: #fff;
+    --yellow: #F5A623; --green: #4CAF50; --red: #D0021B;
+  }
+  body { font-family: 'PingFang SC','Helvetica Neue',sans-serif; background: var(--bg); color: var(--dark); }
+
+  .header { background: var(--dark); color: white; padding: 32px 40px 24px; position: relative; overflow: hidden; }
+  .header::before { content:''; position:absolute; inset:0; background: linear-gradient(135deg,#1a1a1a 55%,#001a4d 100%); }
+  .header-inner { position:relative; z-index:1; display:flex; justify-content:space-between; align-items:flex-end; }
+  .brand-tag { font-size:11px; letter-spacing:2px; color:#5b8fff; font-weight:600; text-transform:uppercase; margin-bottom:6px; }
+  .brand-title { font-size:32px; font-weight:700; letter-spacing:-0.5px; }
+  .brand-sub { font-size:14px; color:#aaa; margin-top:4px; }
+  .header-meta { text-align:right; font-size:12px; color:#888; }
+  .status-badge { display:inline-block; background:var(--brand); color:white; font-size:11px; padding:3px 10px; border-radius:20px; margin-bottom:6px; }
+  .alias-list { font-size:11px; color:#666; margin-top:4px; }
+
+  .nav { background:white; border-bottom:1px solid var(--border); padding:0 40px; display:flex; overflow-x:auto; }
+  .nav-item { padding:14px 18px; font-size:13px; font-weight:500; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; transition:all .2s; }
+  .nav-item.active { color:var(--brand); border-bottom-color:var(--brand); }
+  .nav-item:hover { color:var(--dark); }
+
+  .container { max-width:1100px; margin:0 auto; padding:32px 40px; }
+  .section { display:none; }
+  .section.active { display:block; }
+
+  .card { background:white; border-radius:12px; padding:24px; margin-bottom:20px; border:1px solid var(--border); }
+  .card-title { font-size:13px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+  .card-title .dot { width:6px; height:6px; border-radius:50%; background:var(--brand); }
+
+  .overview-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:20px; }
+  .metric-card { background:white; border-radius:10px; padding:20px; border:1px solid var(--border); }
+  .metric-label { font-size:11px; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px; }
+  .metric-value { font-size:15px; font-weight:600; color:var(--dark); }
+  .metric-card.highlight { background:var(--brand); border-color:var(--brand); }
+  .metric-card.highlight .metric-label { color:rgba(255,255,255,.7); }
+  .metric-card.highlight .metric-value { color:white; }
+
+  .tag { display:inline-block; font-size:11px; font-weight:600; padding:2px 8px; border-radius:4px; }
+  .tag-high { background:#fde8ea; color:var(--red); }
+  .tag-mid { background:#fff3e0; color:#e65100; }
+  .tag-low { background:#e8f5e9; color:#2e7d32; }
+  .tag-active { background:#e8f5e9; color:#2e7d32; }
+  .tag-wait { background:#fafafa; color:#888; border:1px solid #ddd; }
+  .tag-low-conf { background:#f0f4ff; color:var(--brand); }
+
+  .sdot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:5px; }
+  .sdot-green { background:#4CAF50; }
+  .sdot-yellow { background:var(--yellow); }
+  .sdot-red { background:var(--red); }
+  .sdot-grey { background:#ccc; }
+
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; padding:10px 12px; font-size:11px; color:var(--muted); font-weight:600; text-transform:uppercase; border-bottom:2px solid var(--border); background:#fafafa; }
+  td { padding:12px 12px; border-bottom:1px solid var(--border); vertical-align:top; line-height:1.6; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:#fafafa; }
+
+  .opp-row { display:flex; gap:12px; align-items:flex-start; padding:14px 0; border-bottom:1px solid var(--border); }
+  .opp-row:last-child { border-bottom:none; }
+  .opp-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+  .opp-body { flex:1; }
+  .opp-title { font-size:14px; font-weight:600; margin-bottom:4px; }
+  .opp-desc { font-size:12px; color:var(--muted); line-height:1.5; }
+  .opp-footer { display:flex; gap:8px; align-items:center; margin-top:8px; }
+
+  .action-item { display:flex; gap:16px; padding:16px 0; border-bottom:1px solid var(--border); align-items:flex-start; }
+  .action-item:last-child { border-bottom:none; }
+  .action-num { width:28px; height:28px; border-radius:50%; background:var(--brand); color:white; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .action-content { flex:1; }
+  .action-title { font-size:14px; font-weight:600; margin-bottom:4px; }
+  .action-why { font-size:12px; color:var(--muted); margin-bottom:6px; line-height:1.5; }
+  .action-output { font-size:12px; background:#f5f5f5; padding:6px 10px; border-radius:6px; color:var(--mid); }
+  .action-output span { font-weight:600; color:var(--dark); }
+
+  .risk-card { border-left:3px solid; padding:14px 16px; border-radius:0 8px 8px 0; margin-bottom:12px; }
+  .risk-card.high { border-left-color:var(--red); background:#fff8f8; }
+  .risk-card.mid { border-left-color:var(--yellow); background:#fffaf0; }
+  .risk-title { font-size:14px; font-weight:600; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .risk-detail { font-size:12px; color:var(--muted); line-height:1.5; }
+  .risk-action { font-size:12px; margin-top:8px; padding:6px 10px; background:rgba(0,0,0,.04); border-radius:6px; color:var(--mid); }
+
+  .person-card { display:flex; gap:12px; align-items:flex-start; padding:12px; border-radius:8px; background:#fafafa; margin-bottom:10px; }
+  .avatar { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; color:white; flex-shrink:0; }
+  .person-name { font-size:14px; font-weight:600; }
+  .person-role { font-size:12px; color:var(--muted); }
+  .person-resp { font-size:12px; color:var(--mid); margin-top:4px; }
+
+  .q-item { padding:14px; border-radius:8px; border:1px solid var(--border); margin-bottom:10px; background:white; }
+  .q-question { font-size:14px; font-weight:600; margin-bottom:6px; }
+  .q-why { font-size:12px; color:var(--muted); margin-bottom:8px; }
+  .q-ask { font-size:12px; background:#eef3ff; color:var(--brand); padding:6px 10px; border-radius:6px; font-style:italic; }
+
+  .log-item { display:flex; gap:16px; padding:14px 0; border-bottom:1px solid var(--border); }
+  .log-item:last-child { border-bottom:none; }
+  .log-date { font-size:12px; color:var(--muted); min-width:90px; padding-top:2px; }
+  .log-content { font-size:13px; line-height:1.7; }
+  .log-label { color:var(--brand); font-weight:600; }
+
+  .q-count-badge { display:inline-flex; align-items:center; justify-content:center; background:var(--red); color:white; border-radius:10px; font-size:11px; font-weight:700; padding:1px 8px; margin-left:8px; }
+
+  @media (max-width:700px) {
+    .overview-grid { grid-template-columns:1fr 1fr; }
+    .container { padding:20px 16px; }
+    .header { padding:24px 16px 18px; }
+    .nav { padding:0 12px; }
+    .header-inner { flex-direction:column; align-items:flex-start; gap:12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div>
+      <div class="brand-tag">Brand Knowledge Base</div>
+      <div class="brand-title">小度</div>
+      <div class="brand-sub">品牌服务知识库 · AI 智能终端 / 智能家居 / 消费电子</div>
+      <div class="alias-list">别名：小度添添 · 小度添添闺蜜机 · 添添闺蜜机 · 小度闺蜜机</div>
+    </div>
+    <div class="header-meta">
+      <div class="status-badge">● Active</div>
+      <div>最近更新：2026-05-22</div>
+      <div style="margin-top:4px">Q2 抖音闭环 · 5/26 开门红 · 618 大促并行</div>
+    </div>
+  </div>
+</div>
+
+<div class="nav">
+  <div class="nav-item active" onclick="switchTab('overview',this)">总览</div>
+  <div class="nav-item" onclick="switchTab('people',this)">关键联系人</div>
+  <div class="nav-item" onclick="switchTab('opps',this)">商机与风险</div>
+  <div class="nav-item" onclick="switchTab('actions',this)">PM 行动清单</div>
+  <div class="nav-item" onclick="switchTab('questions',this)">待确认问题</div>
+  <div class="nav-item" onclick="switchTab('principles',this)">长期原则</div>
+  <div class="nav-item" onclick="switchTab('updates',this)">更新记录</div>
+</div>
+
+<div class="container">
+
+<!-- ===== OVERVIEW ===== -->
+<div class="section active" id="s-overview">
+  <div class="overview-grid">
+    <div class="metric-card highlight">
+      <div class="metric-label">当前核心目标</div>
+      <div class="metric-value">提升抖音站内品销闭环效率，建立"闺蜜机，选小度"心智</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">业务阶段</div>
+      <div class="metric-value">Q2 闭环 + 5/26 开门红校准 + 618 大促 + 年度框架补齐</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Q2 总预算盘</div>
+      <div class="metric-value">约 500 万（看后搜索目标 71 万+）</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">当前商机数</div>
+      <div class="metric-value">9 个（6 高优 · 3 中优）</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">高风险项</div>
+      <div class="metric-value" style="color:var(--red)">5 项（含合规 / 舆情风险）</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">待确认问题</div>
+      <div class="metric-value">15 项全部待提问</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>当前核心目标</div>
+    <p style="font-size:14px;line-height:1.8;color:var(--mid)">
+      围绕抖音 <strong style="color:var(--dark)">看后搜索、品专展现、直播点击和 SPU 人群转化</strong>，提升小度添添闺蜜机在抖音站内的品销闭环效率，形成 <strong style="color:var(--dark)">「闺蜜机，选小度」</strong> 的场景化心智壁垒，并校准 Q2 约 500 万总盘、达人节奏、竞价 / 合约投放和预估 KPI 的实际落地偏差。5/26 开门红前须完成执行校准。
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>当前主要问题</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <span style="background:#fde8ea;color:var(--red);padding:6px 14px;border-radius:20px;font-size:13px">负面 UGC 搜后占位</span>
+      <span style="background:#fde8ea;color:var(--red);padding:6px 14px;border-radius:20px;font-size:13px">竞品高增长蚕食份额</span>
+      <span style="background:#fde8ea;color:var(--red);padding:6px 14px;border-radius:20px;font-size:13px">话术合规确认风险</span>
+      <span style="background:#fff3e0;color:#e65100;padding:6px 14px;border-radius:20px;font-size:13px">达人 / 人群包投放效率波动</span>
+      <span style="background:#fff3e0;color:#e65100;padding:6px 14px;border-radius:20px;font-size:13px">低效硬广拉高搜索成本</span>
+      <span style="background:#fff3e0;color:#e65100;padding:6px 14px;border-radius:20px;font-size:13px">Q2 执行偏差待校验</span>
+      <span style="background:#f3f3f3;color:#555;padding:6px 14px;border-radius:20px;font-size:13px">年度框架开放问题多</span>
+      <span style="background:#f3f3f3;color:#555;padding:6px 14px;border-radius:20px;font-size:13px">站外转化外溢有限</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>阶段关注事项</div>
+    <table>
+      <thead><tr><th>关注事项</th><th>适用场景</th><th>状态</th></tr></thead>
+      <tbody>
+        <tr><td><strong>以抖音看后搜索为核心优化指标，联动品专 / 直播 / SPU</strong></td><td>Q2 至 618 投放期</td><td><span class="sdot sdot-green"></span><span style="font-size:12px">当前有效</span></td></tr>
+        <tr><td><strong>小度市占第一，但面临海信（+438%）/ 创维（+217%）/ 小米高增长蚕食</strong></td><td>Q2 市场竞争与内容策略</td><td><span class="sdot sdot-green"></span><span style="font-size:12px">当前有效</span></td></tr>
+        <tr><td><strong>Q2 心智从站内搜索增长升级为场景化进攻种草</strong>（亲子、健身、观影）</td><td>Q2 阶段打法与 618 前内容策略</td><td><span class="sdot sdot-green"></span><span style="font-size:12px">当前有效</span></td></tr>
+        <tr><td><strong>5/26–6/20 Q2 完整执行规划需做开门红前校准</strong>（总盘约 500 万）</td><td>5/26 开门红与 618 爆发期</td><td><span class="sdot sdot-green"></span><span style="font-size:12px">当前有效</span></td></tr>
+        <tr><td><strong>内容发布后 1-2 天需强化直播承接</strong></td><td>Q2 达人发布和 618 爆发期</td><td><span class="sdot sdot-green"></span><span style="font-size:12px">当前有效</span></td></tr>
+        <tr><td><strong>5/18 人群包与计划刷新结果需要回收</strong></td><td>Q2 投放调优</td><td><span class="sdot sdot-yellow"></span><span style="font-size:12px">待复核</span></td></tr>
+        <tr><td><strong>竞品人群包量级小，需重新打包</strong></td><td>Q2 合约 / 竞价测试</td><td><span class="sdot sdot-green"></span><span style="font-size:12px">当前有效</span></td></tr>
+        <tr><td><strong>负面 UGC 搜后占位需官方回应和闭环治理</strong></td><td>Q2 搜后内容治理</td><td><span class="sdot sdot-green"></span><span style="font-size:12px">当前有效</span></td></tr>
+        <tr><td><strong>618 头部达人档期紧张需前置预案</strong></td><td>618 大促前后</td><td><span class="sdot sdot-green"></span><span style="font-size:12px">当前有效</span></td></tr>
+        <tr><td><strong>年度框架补齐开放问题与数据 To do 后再定稿</strong></td><td>年度营销计划框架完善阶段</td><td><span class="sdot sdot-green"></span><span style="font-size:12px">当前有效</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== PEOPLE ===== -->
+<div class="section" id="s-people">
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>关键联系人</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px">⚠ 部分接口人真实姓名与所属方待确认</p>
+
+    <div class="person-card">
+      <div class="avatar" style="background:var(--brand)">祈飞</div>
+      <div>
+        <div class="person-name">祈飞抖音团队</div>
+        <div class="person-role">服务方 · 抖音闭环内容 / 星图 / 竞价 / 合约投放与周报复盘执行团队 · 执行接口人</div>
+        <div class="person-resp">负责：分达人 / 分人群包投放复盘、搜索数据、评论区与搜后占位、项目进度 TODO</div>
+        <div style="margin-top:6px;font-size:12px;color:var(--muted)">用数据周报、分层结论和可执行 TODO 沟通；重点说明达人、人群包、投放工具和承接链路</div>
+        <div style="margin-top:6px"><span class="tag tag-active">活跃</span></div>
+      </div>
+    </div>
+
+    <div class="person-card">
+      <div class="avatar" style="background:#388E3C">审稿</div>
+      <div>
+        <div class="person-name">小度品牌方审稿接口（未具名）</div>
+        <div class="person-role">品牌方 · 达人内容审稿与节奏配合方 · 执行接口人</div>
+        <div class="person-resp">负责：节假日审稿、达人发布配合、品牌侧内容确认</div>
+        <div style="margin-top:6px;font-size:12px;color:var(--muted)">需提前同步达人发布节奏和审稿节点，避免节后发布受阻</div>
+        <div style="margin-top:6px"><span class="tag tag-wait">未确认</span></div>
+      </div>
+    </div>
+
+    <div class="person-card">
+      <div class="avatar" style="background:#7B1FA2">蓝V</div>
+      <div>
+        <div class="person-name">小度蓝V / 官方账号运营接口（未具名）</div>
+        <div class="person-role">品牌方 · 官方回应与口碑承接方 · 执行接口人</div>
+        <div class="person-resp">负责：负面 UGC 官方回应、评论区维护、正向内容发布</div>
+        <div style="margin-top:6px;font-size:12px;color:var(--muted)">负面内容建议由官方账号下场回应并做闭环处理</div>
+        <div style="margin-top:6px"><span class="tag tag-wait">未确认</span></div>
+      </div>
+    </div>
+
+    <div class="person-card">
+      <div class="avatar" style="background:#e65100">Brief</div>
+      <div>
+        <div class="person-name">品牌 / IMS 产品 brief 提供方（未具名）</div>
+        <div class="person-role">品牌方 · 产品卖点与 brief 信息提供方 · 信息提供人</div>
+        <div class="person-resp">负责：产品 brief、卖点信息、核心产品形象、功能卖点</div>
+        <div style="margin-top:6px;font-size:12px;color:var(--muted)">需要把品牌想表达、实际传播、用户偏好三方对齐，减少信息冗余</div>
+        <div style="margin-top:6px"><span class="tag tag-wait">未确认</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== OPPS ===== -->
+<div class="section" id="s-opps">
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title"><span class="dot"></span>当前重点商机</div>
+
+    <div class="opp-row">
+      <div class="opp-icon" style="background:#fde8ea">💄</div>
+      <div class="opp-body">
+        <div class="opp-title">美妆类达人破圈与美妆行业特色人群包</div>
+        <div class="opp-desc">在不破坏达人原生内容的前提下扩展高消费女性人群。一诺爆文 + 美妆人群包 + 低搜索成本已形成初步验证，需复盘内容结构并筛选 3-5 个同类达人</div>
+        <div class="opp-footer"><span class="tag tag-high">高优</span><span style="font-size:12px;color:var(--muted)">推进中</span></div>
+      </div>
+    </div>
+
+    <div class="opp-row">
+      <div class="opp-icon" style="background:#e3f2fd">🤖</div>
+      <div class="opp-body">
+        <div class="opp-title">"真 AI 才是真领先"差异化进攻传播</div>
+        <div class="opp-desc">竞品 AI 多为第三方 / 浅层 / 单一场景，小度优势在自研双 AI 大模型、海量资源、场景适配能力。需拆成亲子 AI 陪学、健身 AI 私教、影音免唤醒推荐等可感知内容钩子</div>
+        <div class="opp-footer"><span class="tag tag-high">高优</span><span style="font-size:12px;color:var(--muted)">推进中</span></div>
+      </div>
+    </div>
+
+    <div class="opp-row">
+      <div class="opp-icon" style="background:#e8f5e9">🏠</div>
+      <div class="opp-body">
+        <div class="opp-title">家居测评 / 垂类达人抢占品专后搜后位置</div>
+        <div class="opp-desc">Q2 显示家居测评类更容易出现在品专后第一条，需保留垂类占位角色，用内容质量和加热策略控制硬广高成本</div>
+        <div class="opp-footer"><span class="tag tag-high">高优</span><span style="font-size:12px;color:var(--muted)">推进中</span></div>
+      </div>
+    </div>
+
+    <div class="opp-row">
+      <div class="opp-icon" style="background:#fff3e0">📋</div>
+      <div class="opp-body">
+        <div class="opp-title">合约种草通复投解决竞价放量不足</div>
+        <div class="opp-desc">一诺合约在不同人群包下看后搜成本低，可复投并测试辣妈鹿姐 / 云胡不喜等低成本素材的人群包组合</div>
+        <div class="opp-footer"><span class="tag tag-high">高优</span><span style="font-size:12px;color:var(--muted)">推进中</span></div>
+      </div>
+    </div>
+
+    <div class="opp-row">
+      <div class="opp-icon" style="background:#f0f4ff">📊</div>
+      <div class="opp-body">
+        <div class="opp-title">Q2 完整投放节奏与 KPI 校准（5/26 开门红前）</div>
+        <div class="opp-desc">Q2 完整规划设定总盘约 500 万、竞价 110 万、合约 40 万、星图 350 万，以及看后搜索 71 万+、SPU5A 588 万+ 预估。需建立计划 vs 实际对照表，按四阶段复盘偏差</div>
+        <div class="opp-footer"><span class="tag tag-high">高优</span><span style="font-size:12px;color:var(--muted)">推进中</span></div>
+      </div>
+    </div>
+
+    <div class="opp-row">
+      <div class="opp-icon" style="background:#fde8ea">🔺</div>
+      <div class="opp-body">
+        <div class="opp-title">1+3+N 卖点金字塔与达人 brief 瘦身</div>
+        <div class="opp-desc">当前内容 brief 卖点过多、信息冗余，需先做品牌 brief、实际传播内容、云图偏好三方对齐，输出简版达人 brief（核心产品形象 + 场景卖点 + 功能卖点）</div>
+        <div class="opp-footer"><span class="tag tag-high">高优</span><span style="font-size:12px;color:var(--muted)">待推进</span></div>
+      </div>
+    </div>
+
+    <div class="opp-row">
+      <div class="opp-icon" style="background:#e8f5e9">📅</div>
+      <div class="opp-body">
+        <div class="opp-title">年度营销框架数据补齐与 Roadmap 成稿</div>
+        <div class="opp-desc">现有框架仍有单品 / 品线搜索焦点、达人效能、内容投放配合、闭环取舍等待确认项，需建立数据责任表推进成稿</div>
+        <div class="opp-footer"><span class="tag tag-high">高优</span><span style="font-size:12px;color:var(--muted)">待推进</span></div>
+      </div>
+    </div>
+
+    <div class="opp-row">
+      <div class="opp-icon" style="background:#fff3e0">📺</div>
+      <div class="opp-body">
+        <div class="opp-title">达人发布后直播承接 SOP</div>
+        <div class="opp-desc">Q2 明确发布后 1-2 天直播点击达峰，需建立达人发布时间、直播排班、权益、客服话术和品专承接联动表</div>
+        <div class="opp-footer"><span class="tag tag-mid">中优</span><span style="font-size:12px;color:var(--muted)">待推进</span></div>
+      </div>
+    </div>
+
+    <div class="opp-row">
+      <div class="opp-icon" style="background:#f3e8ff">🙌</div>
+      <div class="opp-body">
+        <div class="opp-title">UGC 口碑活动 + 多品线"全场景智感生活伙伴"心智共创</div>
+        <div class="opp-desc">稀释负面 UGC、扩大真实使用场景，以及将小度从单品工具升级为全场景 AI 生活伙伴。618 后评估立项</div>
+        <div class="opp-footer"><span class="tag tag-mid">中优</span><span style="font-size:12px;color:var(--muted)">暂缓</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>当前重点风险</div>
+
+    <div class="risk-card high">
+      <div class="risk-title"><span>负面 UGC 在搜后结果中反复出现</span><span class="tag tag-high">高风险</span></div>
+      <div class="risk-detail">一条负面内容出现 13 回，直接影响"小度添添闺蜜机""闺蜜机"核心搜索词下的品牌信任和品专后内容环境</div>
+      <div class="risk-action">→ 官方回应 + 私信闭环 + 评论维护 + 平台申诉 + 正向 UGC 覆盖同步推进 · <strong>处理中</strong></div>
+    </div>
+
+    <div class="risk-card high">
+      <div class="risk-title"><span>竞品高增长蚕食小度份额</span><span class="tag tag-high">高风险</span></div>
+      <div class="risk-detail">海信同比 +438%、创维 +217%、小米低价切入，小度 GMV 1.56 亿 / 市占 43% 虽居第一，但增速压力明显</div>
+      <div class="risk-action">→ 定期跟踪竞品 GMV / 市占 / 场景内容布局，强化小度亲子 / 健身 / AI 差异化内容 · <strong>观察中</strong></div>
+    </div>
+
+    <div class="risk-card high">
+      <div class="risk-title"><span>低效硬广拉高搜索成本</span><span class="tag tag-high">高风险</span></div>
+      <div class="risk-detail">低效硬广素材和低互动垂类素材造成消耗不足、搜索成本偏高，影响 618 投放效率</div>
+      <div class="risk-action">→ 建立内容质量门槛和停投规则，垂类素材优先做二次剪辑或换脚本 · <strong>待处理</strong></div>
+    </div>
+
+    <div class="risk-card high">
+      <div class="risk-title"><span>产品 brief 卖点过多，达人理解偏差 + 后搜率偏低</span><span class="tag tag-high">高风险</span></div>
+      <div class="risk-detail">影响内容一致性、搜索激发和卖点心智沉淀，需用 1+3+N 结构重写达人 brief 并校验</div>
+      <div class="risk-action">→ 先做三方对齐（品牌 brief / 实际传播 / 云图偏好），再输出简版 brief · <strong>待处理</strong></div>
+    </div>
+
+    <div class="risk-card high">
+      <div class="risk-title"><span>评论区预埋与竞品攻防话术若未确认即执行，引发合规和信任风险</span><span class="tag tag-high">高风险</span></div>
+      <div class="risk-detail">具体话术涉及"正版资源""会员通用""用多久都不卡""竞品 AI 能力弱"等对外承诺或比较，未经确认直接执行会放大舆情与合规风险</div>
+      <div class="risk-action">→ 将话术分为事实可证 / 需改写 / 不可使用三类，执行前由品牌 / 法务 / 客服口径确认 · <strong>待处理</strong></div>
+    </div>
+
+    <div class="risk-card high">
+      <div class="risk-title"><span>618 头部达人档期紧张 / 数据不稳定</span><span class="tag tag-high">高风险</span></div>
+      <div class="risk-detail">头部达人可选档期靠后、数据不稳定，影响节点曝光峰值和投放节奏稳定性</div>
+      <div class="risk-action">→ 提前锁定备选账号、合约补量和达人分层排期 · <strong>待处理</strong></div>
+    </div>
+
+    <div class="risk-card mid">
+      <div class="risk-title"><span>竞价投放黑盒跑量影响画像精准度</span><span class="tag tag-mid">中风险</span></div>
+      <div class="risk-detail">大促竞争期可能导致非目标人群扩量，削弱 A3 / SPU 质量</div>
+      <div class="risk-action">→ 合约无磁贴补精准人群，竞价计划按人群包和搜索成本分层监控 · <strong>观察中</strong></div>
+    </div>
+
+    <div class="risk-card mid">
+      <div class="risk-title"><span>站外 / 京东外溢弱导致 KPI 期待错位</span><span class="tag tag-mid">中风险</span></div>
+      <div class="risk-detail">若品牌仍期待站外直接增长，可能低估站内品专与直播承接价值</div>
+      <div class="risk-action">→ 沟通时明确站内闭环主指标和站外外溢边界 · <strong>观察中</strong></div>
+    </div>
+
+    <div class="risk-card mid">
+      <div class="risk-title"><span>竞品人群包量级不足影响投放测试</span><span class="tag tag-mid">中风险</span></div>
+      <div class="risk-detail">合约 / 竞价计划无法满足日投放最低要求，测试结论不稳定</div>
+      <div class="risk-action">→ 重新打包并验证新包量级、画像和搜索成本 · <strong>待处理</strong></div>
+    </div>
+
+    <div class="risk-card mid">
+      <div class="risk-title"><span>年度框架开放问题较多，未补数据就推进 Roadmap 会导致策略失焦</span><span class="tag tag-mid">中风险</span></div>
+      <div class="risk-detail">影响 2026 年阶段打法、预算分配和闭环 / 外循环判断</div>
+      <div class="risk-action">→ 先把待深挖问题拆成数据 To do、决策项和待品牌确认项 · <strong>待处理</strong></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ACTIONS ===== -->
+<div class="section" id="s-actions">
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>PM 行动清单</div>
+
+    <div class="action-item">
+      <div class="action-num">1</div>
+      <div class="action-content">
+        <div class="action-title">🔴 5/26 开门红前完成 Q2 完整执行校准</div>
+        <div class="action-why">Q2 完整规划已进入核心种草后段，5/26 前必须确认达人发布、素材授权、竞价 / 合约预算、5/18 人群包刷新和负面 UGC 治理是否能支撑 6/20 前目标（看后搜索 71 万+、SPU5A 588 万+）</div>
+        <div class="action-output"><span>产出物：</span>5/26 开门红前执行校准表 + Q2 风险处理台账 &nbsp;|&nbsp; <span>协同：</span>祈飞抖音团队、投放执行、品牌直播团队、小度蓝V &nbsp;|&nbsp; <span>状态：</span>未开始</div>
+      </div>
+    </div>
+
+    <div class="action-item">
+      <div class="action-num">2</div>
+      <div class="action-content">
+        <div class="action-title">🟠 确认 Q2 投放预算、工具组合和 KPI 预估是否仍按原计划执行</div>
+        <div class="action-why">完整规划中竞价 110 万、合约无磁贴 32 万、合约含磁贴 8 万，以及搜索成本 7.01、CPSPUA3 0.85 等预估，若当前消耗偏离会直接影响开门红和 618 爆发</div>
+        <div class="action-output"><span>产出物：</span>Q2 投流预算与 KPI 偏差表 &nbsp;|&nbsp; <span>协同：</span>祈飞抖音团队、投放执行、数据支持 &nbsp;|&nbsp; <span>状态：</span>未开始</div>
+      </div>
+    </div>
+
+    <div class="action-item">
+      <div class="action-num">3</div>
+      <div class="action-content">
+        <div class="action-title">🟡 完成评论区预埋和竞品攻防话术的事实 / 合规校验</div>
+        <div class="action-why">完整规划已列出可外发话术，其中包含资源、会员、长期不卡、竞品比较等强承诺，未经确认直接执行会放大舆情与合规风险</div>
+        <div class="action-output"><span>产出物：</span>评论区 FAQ 与竞品回应话术审核版 &nbsp;|&nbsp; <span>协同：</span>品牌方审稿接口、蓝V 运营、客服 / 法务、祈飞团队 &nbsp;|&nbsp; <span>状态：</span>未开始</div>
+      </div>
+    </div>
+
+    <div class="action-item">
+      <div class="action-num" style="background:#888">4</div>
+      <div class="action-content">
+        <div class="action-title">🔵 持续跟踪"闺蜜机，选小度"场景化心智与站内闭环指标联动</div>
+        <div class="action-why">Q2 已从搜索增长转向场景化心智壁垒，仍需证明心智变化能带动搜索、进店和转化。Q2 当前搜索成本 9.03、进店成本 4.07、转化成本 855.58</div>
+        <div class="action-output"><span>产出物：</span>站内闭环周度指标看板 &nbsp;|&nbsp; <span>协同：</span>祈飞抖音团队、品牌数据 / 直播承接方 &nbsp;|&nbsp; <span>状态：</span>进行中</div>
+      </div>
+    </div>
+
+    <div class="action-item">
+      <div class="action-num" style="background:#bbb">5</div>
+      <div class="action-content">
+        <div class="action-title">⏸ 保留 UGC 活动和多品线全场景心智共创方向，618 后再评估立项</div>
+        <div class="action-why">Q1 已有"小度带我穿越时空"和"全场景智感生活伙伴"共创方向，但当前 Q2 / 618 更急的是投放效率和承接</div>
+        <div class="action-output"><span>产出物：</span>UGC / 多品线共创机会备忘录 &nbsp;|&nbsp; <span>协同：</span>品牌市场、祈飞抖音团队、达人 / UGC 运营 &nbsp;|&nbsp; <span>状态：</span>等待外部</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== QUESTIONS ===== -->
+<div class="section" id="s-questions">
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>待确认问题<span class="q-count-badge">15 项待提问</span></div>
+
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px;padding:10px;background:#fafafa;border-radius:8px">
+      ⚠ 高优问题 12 项 · 中优问题 3 项，均处于待提问状态
+    </div>
+
+    <!-- 高优 -->
+    <div class="q-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="q-question">两条负面 UGC 是否已完成官方回应、评论维护或平台处理？</div><span class="tag tag-high">高优</span></div>
+      <div class="q-why">直接影响核心搜索词下的品牌信任和舆情风险</div>
+      <div class="q-ask">问蓝V / 祈飞团队："Q2 周报里的两条负面 UGC，现在分别做了哪些动作？有无回应截图、申诉结果和复查后的搜后位置？"</div>
+    </div>
+
+    <div class="q-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="q-question">5/18 人群包与计划刷新后的数据表现如何？</div><span class="tag tag-high">高优</span></div>
+      <div class="q-why">决定 618 前预算倾斜、复投和停投名单</div>
+      <div class="q-ask">问祈飞团队："5/18 刷新后 3-5 天，分达人和分人群包的消耗、看后搜成本、A3 和跑量分别怎么变化？"</div>
+    </div>
+
+    <div class="q-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="q-question">Q2 完整规划当前实际执行与原计划偏差是多少？</div><span class="tag tag-high">高优</span></div>
+      <div class="q-why">5/26 开门红前需要判断达人发布、素材授权、竞价 / 合约预算和 KPI 是否还能按原目标推进</div>
+      <div class="q-ask">问祈飞团队 / PM："按 Q2 完整规划，当前实际发布人数、素材授权、竞价消耗、合约消耗、看后搜索、SPU5A 与计划分别差多少？"</div>
+    </div>
+
+    <div class="q-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="q-question">评论区预埋和竞品攻防话术哪些可以直接使用，哪些需要改写或禁用？</div><span class="tag tag-high">高优</span></div>
+      <div class="q-why">规划中的话术已到对外表达层级，涉及事实承诺和竞品比较，未确认会引发风险</div>
+      <div class="q-ask">问品牌方审稿接口 / 法务："这些预埋评论和竞品回应话术，哪些有事实依据和品牌确认？哪些需要删掉或改成更安全的说法？"</div>
+    </div>
+
+    <div class="q-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="q-question">Q2 预算与 KPI 预估是否仍按搜索成本 7.01、CPSPUA3 0.85、看后搜索 71 万+推进？</div><span class="tag tag-high">高优</span></div>
+      <div class="q-why">决定后续复盘是否按原目标衡量，还是需要根据实际投放环境调整预期</div>
+      <div class="q-ask">问 PM / 祈飞团队："Q2 完整规划里的搜索成本、SPU5A、看后搜索量预估是否仍是当前目标？如果已调整，以哪个版本为准？"</div>
+    </div>
+
+    <div class="q-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="q-question">看后搜应优先聚焦单品型号还是品线？</div><span class="tag tag-high">高优</span></div>
+      <div class="q-why">这是年度框架卖点金字塔的核心待深挖问题，会影响关键词、达人 brief、搜索占位和投放优化口径</div>
+      <div class="q-ask">问品牌方 / 祈飞团队："后续看后搜优化，我们是优先推具体单品型号词，还是优先推'闺蜜机'品线词？不同阶段是否分工？"</div>
+    </div>
+
+    <div class="q-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="q-question">当前达人效能评估的复投、停投和扩充结论是什么？</div><span class="tag tag-high">高优</span></div>
+      <div class="q-why">年度框架需要回答达人梯队如何从宽泛矩阵转向垂类和大曝光分工</div>
+      <div class="q-ask">问祈飞团队："现有达人按曝光、搜索、进店、转化、搜后占位分别怎么分层？哪些复投、哪些停投、哪些扩充？"</div>
+    </div>
+
+    <div class="q-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="q-question">内容与投放配合的 Good case / Bad case 分别有哪些？</div><span class="tag tag-high">高优</span></div>
+      <div class="q-why">决定后续是否能避免优质内容无投放、脉冲式投放等效率浪费问题</div>
+      <div class="q-ask">问投放执行 / 内容团队："过去三阶段里，哪些内容是付费成功撬动自然流？哪些是优质内容无投放或脉冲投放导致效率浪费？"</div>
+    </div>
+
+    <div class="q-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="q-question">抖音闭环与非闭环外循环在 2026 年如何分工？</div><span class="tag tag-high">高优</span></div>
+      <div class="q-why">影响年度预算、指标体系和对三方电商平台的搜索贡献判断</div>
+      <div class="q-ask">问品牌方 / PM："2026 年抖音站内要承担哪些指标，站外 / 三方电商要承担哪些指标？CPM、CPE、完播、ROI、进店、成交分别怎么用？"</div>
+    </div>
+
+    <div class="q-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="q-question">Q2 规划中小度、海信、创维、小米 GMV / 市占数据的数据源和取数周期是什么？</div><span class="tag tag-high">高优</span></div>
+      <div class="q-why">这些数据支撑"市占第一但被蚕食"的竞争判断，需避免后续引用口径不清</div>
+      <div class="q-ask">问祈飞团队 / 数据支持："Q2 方案里小度 1.56 亿、43% 市占，以及海信 / 创维同比增速的数据源和取数周期分别是什么？"</div>
+    </div>
+
+    <div class="q-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="q-question">618 阶段品牌最终 KPI 权重是什么？</div><span class="tag tag-high">高优</span></div>
+      <div class="q-why">影响投放优化是优先看搜索、A3、直播点击还是成交承接</div>
+      <div class="q-ask">问品牌方 / PM："618 阶段最终按什么权重评估：看后搜索、A3 / SPU、品专点击、直播点击、成交，哪个是硬指标？"</div>
+    </div>
+
+    <div class="q-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="q-question">重点达人发布后 1-2 天，直播间是否有确定的排班和权益承接？</div><span class="tag tag-high">高优</span></div>
+      <div class="q-why">内容热度需要及时转化为直播点击和成交</div>
+      <div class="q-ask">问品牌直播团队 / 祈飞团队："重点达人发布后 48 小时内，直播间排班、货品权益、客服话术和品专承接能否同步排好？"</div>
+    </div>
+
+    <!-- 中优 -->
+    <div class="q-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="q-question">一诺、美妆行业特色人群包和同类达人是否进入复投 / 扩量计划？</div><span class="tag tag-mid">中优</span></div>
+      <div class="q-why">一诺和美妆人群包已显现破圈潜力，但还需验证可复制性</div>
+      <div class="q-ask">问祈飞团队 / 品牌方："一诺是否确认复投？是否计划筛选同类美妆达人和复用美妆行业特色人群包？"</div>
+    </div>
+
+    <div class="q-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="q-question">小度 vs 海信的购买来源、成交人群跨品类偏好和评论内容分析何时补齐？</div><span class="tag tag-mid">中优</span></div>
+      <div class="q-why">这是年度框架中卖点、人群和竞品判断的关键数据基础</div>
+      <div class="q-ask">问数据支持 / 祈飞团队："小度与海信购买来源、成交人群跨类目 TGI、评论内容分析，分别由谁在什么时候补齐？"</div>
+    </div>
+
+    <div class="q-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="q-question">UGC 活动和多品线全场景心智方向是否只作共创备选，还是需要排期？</div><span class="tag tag-mid">中优</span></div>
+      <div class="q-why">决定中期品牌心智方案是否需要提前投入资源</div>
+      <div class="q-ask">问品牌市场 / PM："Q1 共创里的 UGC 活动和多品线心智方向，618 前只沉淀备选，还是要提前排方案？"</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PRINCIPLES ===== -->
+<div class="section" id="s-principles">
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>长期偏好</div>
+    <table>
+      <thead><tr><th>结论</th><th>置信度</th><th>对服务动作的影响</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>抖音经营优先围绕站内闭环和搜索心智</strong>，不以站外引流为主目标</td>
+          <td><span class="tag tag-high">高</span></td>
+          <td>方案和复盘优先看看后搜索、品专展现、直播点击、A3 / SPU 流转</td>
+        </tr>
+        <tr>
+          <td><strong>核心人群：24-40 岁高消费女性、精致妈妈、新锐白领、资深中产</strong>，保留场景破圈</td>
+          <td><span class="tag tag-high">高</span></td>
+          <td>达人、人群包和内容场景要优先校验是否触达核心购买人群，再评估破圈效率</td>
+        </tr>
+        <tr>
+          <td><strong>卖点表达围绕"AI + 生活"黄金三角</strong>（AI 交互优势 + 资源生态优势 + 硬件体验优势）</td>
+          <td><span class="tag tag-mid">中</span></td>
+          <td>内容脚本不要只讲硬件参数，要把 AI 交互、内容资源、家庭 / 健身 / 亲子 / 追剧场景放在同一套体验里</td>
+        </tr>
+        <tr>
+          <td><strong>Q2 差异化心智可围绕"真 AI 才是真领先"展开</strong></td>
+          <td><span class="tag tag-low-conf">低</span></td>
+          <td>Q2 传播应把 AI 能力翻译成亲子、健身、影音等可视化场景，不只喊技术领先</td>
+        </tr>
+        <tr>
+          <td><strong>卖点体系需从品牌 brief、实际传播内容、用户真实偏好三方对齐</strong></td>
+          <td><span class="tag tag-low-conf">低</span></td>
+          <td>做脚本、达人 brief 和年度框架时先瘦身卖点，再决定主卖点、场景卖点和功能卖点</td>
+        </tr>
+        <tr>
+          <td><strong>优质内容需强视觉开头、自然植入、前半段完成首次曝光</strong></td>
+          <td><span class="tag tag-high">高</span></td>
+          <td>达人脚本评审要前置检查开头、植入时间点、植入自然度和观众流失风险</td>
+        </tr>
+        <tr>
+          <td><strong>评论区与搜后内容占位是品牌资产</strong>，需要前置治理</td>
+          <td><span class="tag tag-mid">中</span></td>
+          <td>每次达人发布和爆文后都要同步评论区关键词、搜后负面、官方回应和正向 UGC 铺排</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>长期禁忌</div>
+    <table>
+      <thead><tr><th>结论</th><th>服务中应避免什么</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>❌ <strong>不宜用站外 / 京东搜索增长直接证明抖音内容投放效果</strong></td>
+          <td>汇报时避免把站外增长承诺为投放直接结果，需区分站内闭环指标和外溢价值</td>
+        </tr>
+        <tr>
+          <td>❌ <strong>避免硬套 3C 口播和强广告感</strong>，打断达人原生内容节奏</td>
+          <td>破圈达人脚本应以达人语境和故事结构为主，产品卖点融入场景，避免公式化参数堆叠</td>
+        </tr>
+        <tr>
+          <td>❌ <strong>避免把年度框架中的待深挖问题提前包装成已确认策略</strong></td>
+          <td>年度计划输出前必须标明哪些是已验证结论、哪些是待补数据、哪些需要品牌拍板</td>
+        </tr>
+        <tr>
+          <td>❌ <strong>避免持续加码低效素材、低效达人或异常人群包</strong></td>
+          <td>建立停投 / 复投阈值，低效内容先诊断，不靠继续加热硬拉数据</td>
+        </tr>
+        <tr>
+          <td>❌ <strong>避免只做冲评论或口水战式回应负面 UGC</strong></td>
+          <td>负面治理优先官方解释、私信闭环、平台申诉和评论维护，避免制造二次争议</td>
+        </tr>
+        <tr>
+          <td>❌ <strong>避免直接复用未经品牌 / 法务确认的评论区预埋和竞品攻防话术</strong></td>
+          <td>话术进入执行前必须做事实校验、品牌口径确认和合规审查，不能直接当作可外发标准话术</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>长期判断标准</div>
+    <table>
+      <thead><tr><th>判断标准</th><th>对执行的影响</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>抖音看后搜索数 / 搜索成本是核心优化指标</strong>，联动品专、直播点击、SPU 人群转化观察</td>
+          <td>每周复盘必须同时呈现看后搜、品专 / 直播承接和 A3 / SPU 流转，不只看播放或互动</td>
+        </tr>
+        <tr>
+          <td><strong>达人内容要同时看自然流量、投放后搜索成本、A3、搜后占位和评论氛围</strong></td>
+          <td>达人复投不只按播放量判断，应给出"复投、观察、停投、转合约测试"的明确建议</td>
+        </tr>
+        <tr>
+          <td><strong>曝光型达人利于传播触发，垂类 / 家居测评更容易抢占品专后优质搜后曝光位</strong></td>
+          <td>投放组合需同时保留曝光触发和垂类占位两类角色，不能只押一种达人类型</td>
+        </tr>
+        <tr>
+          <td><strong>投放工具按 AD 竞价种草（50%）/ 合约无磁贴（30%）/ 合约含磁贴（20%）分工</strong></td>
+          <td>日常种草用 AD 保基本盘，大促和精准人群承接用合约补足，含磁贴用于直播 / 商品承接但需注意 CPA3 成本</td>
+        </tr>
+        <tr>
+          <td><strong>阶段复盘要区分取数口径</strong>：Q4 外循环 + 京魔方 vs Q1 / Q2 抖音闭环数据不可直接硬比</td>
+          <td>复盘报告需先说明数据源和口径，再解释搜索成本、进店成本和转化成本变化</td>
+        </tr>
+        <tr>
+          <td><strong>卖点金字塔应按"核心产品形象 + 场景卖点 + 功能卖点"（1+3+N）组织</strong></td>
+          <td>达人 brief 和内容复盘应先判断主场景，再分配功能卖点，避免单条内容承载过多信息</td>
+        </tr>
+        <tr>
+          <td><strong>Q2 完整执行规划需要按阶段预算、达人发布、投流工具和预估 KPI 做实际偏差复盘</strong></td>
+          <td>每次阶段复盘要明确实际消耗、达人发布、素材授权、合约 / 竞价跑量和 KPI 是否偏离原计划</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== UPDATES ===== -->
+<div class="section" id="s-updates">
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>更新记录（5 次更新 · 2026-05-22）</div>
+
+    <div class="log-item">
+      <div class="log-date">2026-05-22<br><span style="color:#bbb">Q1 执行复盘</span></div>
+      <div class="log-content">
+        <strong>新建知识库主文档</strong>，来源：2026-02-28_2359_执行复盘报告.md<br>
+        沉淀小度添添闺蜜机 Q1 抖音搜索经营、内容策略、投放工具组合、评论区攻防和共创方向。<br>
+        <span class="log-label">确认原则：</span>"抖音看后搜索是核心优化指标""站内闭环优先于站外引流""AI + 生活黄金三角卖点""强视觉开头 + 前半段自然植入"。<br>
+        <span class="log-label">阶段变化：</span>CNY / Q1 执行结果作为历史依据沉淀，不作为当前阶段待执行事项保留。
+      </div>
+    </div>
+
+    <div class="log-item">
+      <div class="log-date">2026-05-22<br><span style="color:#bbb">Q2 周报整理</span></div>
+      <div class="log-content">
+        <strong>新增 Q2 / 618 当前关注、重点商机、风险和 PM Top 5 动作</strong>，来源：2026-05-13_2359_周报整理.md<br>
+        <span class="log-label">强化：</span>一诺 / 美妆达人破圈、家居测评垂类搜后占位、合约种草通解决竞价放量不足、达人发布后 1-2 天直播承接等判断。<br>
+        <span class="log-label">修正：</span>将"抖音搜索对站外拉动有限"纳入长期禁忌。<br>
+        <span class="log-label">阶段变化：</span>从 Q1 复盘沉淀转为 Q2 / 618 前投放效率、搜后口碑和直播承接协同。
+      </div>
+    </div>
+
+    <div class="log-item">
+      <div class="log-date">2026-05-22<br><span style="color:#bbb">营销阶段提效研究</span></div>
+      <div class="log-content">
+        <strong>新增 Y25Q4 → Y26Q1 → Y26Q2 三阶段营销演进认知</strong>，来源：2026-05-22_0125_营销阶段提效研究.md<br>
+        主线：站外引流收割 → 站内搜索增长闭环 → Q2 场景化心智壁垒"闺蜜机，选小度"。<br>
+        <span class="log-label">强化：</span>Q2 亲子 / 健身 / 观影三大场景 + AD 竞价种草通 + 合约种草通组合的大促放量稳定性。<br>
+        <span class="log-label">修正：</span>补充阶段复盘必须区分 Q4 外循环 + 京魔方与 Q1 / Q2 抖音闭环取数口径。
+      </div>
+    </div>
+
+    <div class="log-item">
+      <div class="log-date">2026-05-22<br><span style="color:#bbb">Q2 星图营销规划</span></div>
+      <div class="log-content">
+        <strong>新增 Q2 市场竞争格局与"真 AI 才是真领先"Big Idea</strong>，来源：2026-03-26_0000_Q2抖音星图营销规划.md<br>
+        <span class="log-label">强化：</span>亲子 / 健身 / 影音三大场景差异化价值；自研双 AI 大模型、海量资源、场景适配能力纳入"真 AI"传播依据。<br>
+        <span class="log-label">修正：</span>将"竞品高增长蚕食份额"补入当前主要问题和重点风险。<br>
+        <span class="log-label">待确认：</span>GMV / 市占 / 同比数据源与取数周期；"真 AI 才是真领先"是否为品牌方确认口径。
+      </div>
+    </div>
+
+    <div class="log-item">
+      <div class="log-date">2026-05-22<br><span style="color:#bbb">年度框架</span></div>
+      <div class="log-content">
+        <strong>新增年度框架开放问题、1+3+N 卖点金字塔、达人梯队、投流与内容配合、闭环取舍等待推进事项</strong>，来源：2026-05-22_0125_年度框架.md<br>
+        <span class="log-label">强化：</span>"卖点过多会导致达人理解偏差和后搜率低"的风险，1+3+N 卖点 brief 瘦身列入 PM 下次沟通前准备。<br>
+        <span class="log-label">修正：</span>年度框架标记为未定稿工作大纲，不把待深挖问题写成确定策略。
+      </div>
+    </div>
+
+    <div class="log-item">
+      <div class="log-date">2026-05-22<br><span style="color:#bbb">Q2 完整执行规划</span></div>
+      <div class="log-content">
+        <strong>新增 Q2 完整执行节奏、阶段预算、工具组合、人群包、评论区话术、效果预估</strong>，来源：2026-05-22_0137_Q2完整执行规划.md<br>
+        <span class="log-label">强化：</span>5/26 开门红前必须做计划 vs 实际校准（总盘约 500 万、竞价 110 万、合约 40 万、看后搜索 71 万+、SPU5A 588 万+）。<br>
+        <span class="log-label">修正：</span>评论区预埋和竞品攻防话术从"可执行动作"降级为"需事实 / 合规校验后才能外发"的当前风险。<br>
+        <span class="log-label">待确认：</span>Q2 实际执行偏差、话术可用 / 改写 / 禁用清单、预估目标是否仍按原版本推进。
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+function switchTab(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>
