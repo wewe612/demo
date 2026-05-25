@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>单品全链路诊断看板</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#f0f2f7;color:#2d3748;min-height:100vh;font-size:13px}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:#e8eaf0}::-webkit-scrollbar-thumb{background:#c5cade;border-radius:3px}
+
+/* HEADER */
+.hdr{background:#fff;border-bottom:1px solid #e2e6f0;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.hdr-l{display:flex;align-items:center;gap:10px}
+.hdr-icon{font-size:20px}
+.hdr-title{font-size:15px;font-weight:700;color:#1a202c}
+.hdr-meta{font-size:11px;color:#8896ae;margin-top:1px}
+.hdr-badge{background:#eef1f9;border:1px solid #d6dcea;color:#5a6a8a;padding:4px 12px;border-radius:20px;font-size:11px}
+
+/* TABS */
+.tabs{background:#fff;border-bottom:1px solid #e2e6f0;padding:0 20px;display:flex;overflow-x:auto;scrollbar-width:none;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:11px 18px;cursor:pointer;font-size:12px;color:#8896ae;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;user-select:none}
+.tab:hover{color:#4a5568}
+.tab.active{color:#4361ee;border-bottom-color:#4361ee;font-weight:600}
+
+/* MAIN */
+.main{padding:20px;max-width:1440px;margin:0 auto}
+.panel{display:none}.panel.active{display:block}
+
+/* SECTION */
+.sec{font-size:11px;font-weight:700;color:#8896ae;text-transform:uppercase;letter-spacing:.06em;margin:24px 0 10px;display:flex;align-items:center;gap:8px}
+.sec::after{content:'';flex:1;height:1px;background:#e2e6f0}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:4px}
+.kpi{background:#fff;border:1px solid #e2e6f0;border-radius:10px;padding:14px 14px 12px;border-left-width:3px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.kpi.ok{border-left-color:#38a169}.kpi.bad{border-left-color:#e53e3e}.kpi.warn{border-left-color:#d69e2e}
+.kpi-lbl{font-size:11px;color:#8896ae;margin-bottom:7px;line-height:1.4}
+.kpi-val{font-size:22px;font-weight:800;color:#1a202c;margin-bottom:3px}
+.kpi-val.sm{font-size:16px;margin-top:3px}
+.kpi-row{display:flex;align-items:center;gap:5px;margin-top:2px}
+.kpi-trend{font-size:11px}
+.up-g{color:#38a169}.dn-b{color:#e53e3e}.up-b{color:#e53e3e}.neu{color:#8896ae}
+.kpi-base{font-size:10px;color:#b0bcd0;margin-top:1px}
+.kpi-note{font-size:10px;color:#a0aec0;margin-top:6px;padding-top:6px;border-top:1px solid #edf0f7}
+
+/* STATUS */
+.s{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.s.ok{background:#f0fff4;color:#276749;border:1px solid #c6f6d5}
+.s.bad{background:#fff5f5;color:#c53030;border:1px solid #fed7d7}
+.s.warn{background:#fffbeb;color:#b7791f;border:1px solid #fefcbf}
+
+/* CARD */
+.card{background:#fff;border:1px solid #e2e6f0;border-radius:10px;overflow:hidden;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.card-hdr{padding:11px 16px;border-bottom:1px solid #edf0f7;display:flex;align-items:center;justify-content:space-between;background:#fafbfd}
+.card-title{font-size:13px;font-weight:600;color:#2d3748}
+.card-sub{font-size:11px;color:#a0aec0}
+.card-body{overflow-x:auto}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{background:#f7f8fc;color:#718096;padding:8px 12px;text-align:left;font-weight:600;border-bottom:1px solid #e2e6f0;white-space:nowrap}
+.tbl td{padding:8px 12px;border-bottom:1px solid #f0f2f7;color:#4a5568;white-space:nowrap}
+.tbl tbody tr:last-child td{border-bottom:none}
+.tbl tbody tr:hover td{background:#fafbfe}
+.tbl td.dim{color:#4361ee;font-weight:500}
+.tbl tr.hl td{background:#fff8f8}
+.tbl tr.total td{background:#f7f8fc;font-weight:700;color:#2d3748}
+
+/* TREND */
+.up{color:#38a169}.dn{color:#e53e3e}.nt{color:#8896ae}
+
+/* CHAIN GRID */
+.chain{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid #edf0f7}
+.chain-col{border-right:1px solid #edf0f7;padding:16px}.chain-col:last-child{border-right:none}
+.stage-tag{font-size:10px;font-weight:700;padding:4px 9px;border-radius:5px;letter-spacing:.04em;display:inline-block;margin-bottom:12px}
+.st-m{background:#ebf0ff;color:#4361ee}
+.st-s{background:#f3e8ff;color:#805ad5}
+.st-e{background:#e6fffa;color:#2c7a7b}
+.st-a{background:#fffbeb;color:#b7791f}
+.cm{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f0f2f7}
+.cm:last-of-type{border-bottom:none}
+.cm-k{font-size:11px;color:#8896ae}.cm-v{font-size:12px;font-weight:600;color:#2d3748}
+.tag-row{margin-top:10px;display:flex;flex-wrap:wrap;gap:4px}
+
+/* FUNNEL */
+.funnel{padding:18px}
+.f-row{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.f-lbl{width:72px;font-size:11px;color:#718096;text-align:right}
+.f-wrap{flex:1;background:#f0f2f7;border-radius:4px;height:32px;overflow:hidden}
+.f-bar{height:100%;display:flex;align-items:center;padding:0 10px;font-size:11px;font-weight:600;color:#fff;border-radius:4px}
+.f-rt{width:80px;font-size:11px}
+
+.funnel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* BADGE */
+.bk{display:inline-block;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:700}
+.bk1{background:#fef3c7;color:#d97706}
+.bk2{background:#f1f5f9;color:#64748b}
+.bk3{background:#fdf2eb;color:#b45309}
+.bk4{color:#a0aec0}
+
+@media(max-width:860px){
+  .chain{grid-template-columns:1fr 1fr}
+  .chain-col{border-right:none;border-bottom:1px solid #edf0f7}.chain-col:last-child{border-bottom:none}
+  .profile-grid{grid-template-columns:1fr}
+}
+@media(max-width:540px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .chain{grid-template-columns:1fr}
+  .funnel-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-l">
+    <span class="hdr-icon">📦</span>
+    <div>
+      <div class="hdr-title">单品全链路诊断看板</div>
+      <div class="hdr-meta">产品：XX补水面霜 &nbsp;·&nbsp; 数据周期：近7天 &nbsp;·&nbsp; 更新：2025-05-18</div>
+    </div>
+  </div>
+  <div class="hdr-badge">📅 W20 · 2025/05/11 - 05/17</div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="go('ov')">📊 总看板</div>
+  <div class="tab" onclick="go('mk')">📣 营销端</div>
+  <div class="tab" onclick="go('sr')">🔍 搜索心智</div>
+  <div class="tab" onclick="go('ec')">🛒 EC承接</div>
+  <div class="tab" onclick="go('af')">⭐ 口碑售后</div>
+</div>
+
+<div class="main">
+
+<!-- ==================== 总看板 ==================== -->
+<div class="panel active" id="p-ov">
+  <div class="sec">全链路健康度一览</div>
+  <div class="card">
+    <div class="card-hdr">
+      <div>
+        <div class="card-title">营销 → 搜索心智 → EC承接 → 口碑售后</div>
+        <div class="card-sub">红色标记为需重点关注环节 · 环比均与前7日对比</div>
+      </div>
+    </div>
+    <div class="chain card-body">
+      <div class="chain-col">
+        <span class="stage-tag st-m">营销端</span>
+        <div class="cm"><span class="cm-k">营销花费</span><span class="cm-v">¥12.6万 <span class="up">↑12%</span></span></div>
+        <div class="cm"><span class="cm-k">内容曝光量</span><span class="cm-v">2,340万 <span class="dn">↓8%</span></span></div>
+        <div class="cm"><span class="cm-k">篇均曝光量</span><span class="cm-v">2.76万 <span class="dn">↓11%</span></span></div>
+        <div class="cm"><span class="cm-k">UGC占比</span><span class="cm-v">32% <span class="dn">↓8pp</span></span></div>
+        <div class="tag-row"><span class="s ok">✅ 花费达标</span><span class="s bad">❌ 内容质量</span></div>
+      </div>
+      <div class="chain-col">
+        <span class="stage-tag st-s">搜索心智</span>
+        <div class="cm"><span class="cm-k">产品词搜索次数</span><span class="cm-v">4.52万 <span class="up">↑5%</span></span></div>
+        <div class="cm"><span class="cm-k">内容触达搜索率</span><span class="cm-v">0.19% <span class="dn">↓0.05pp</span></span></div>
+        <div class="cm"><span class="cm-k">搜索成交金额</span><span class="cm-v">¥8.9万 <span class="dn">↓12%</span></span></div>
+        <div class="cm"><span class="cm-k">搜索转化率</span><span class="cm-v">3.2% <span class="dn">↓0.8pp</span></span></div>
+        <div class="tag-row"><span class="s ok">✅ 搜索量</span><span class="s bad">❌ 搜索转化</span></div>
+      </div>
+      <div class="chain-col">
+        <span class="stage-tag st-e">EC承接</span>
+        <div class="cm"><span class="cm-k">商品曝光人数</span><span class="cm-v">156万 <span class="dn">↓5%</span></span></div>
+        <div class="cm"><span class="cm-k">商品点击率</span><span class="cm-v">5.7% <span class="dn">↓1.5pp</span></span></div>
+        <div class="cm"><span class="cm-k">商品购买率</span><span class="cm-v">2.6% <span class="dn">↓0.5pp</span></span></div>
+        <div class="cm"><span class="cm-k">商品销售金额</span><span class="cm-v">¥68.4万 <span class="dn">↓7%</span></span></div>
+        <div class="tag-row"><span class="s bad">❌ 点击率</span><span class="s bad">❌ 转化率</span></div>
+      </div>
+      <div class="chain-col">
+        <span class="stage-tag st-a">口碑售后</span>
+        <div class="cm"><span class="cm-k">评论数</span><span class="cm-v">1,247 <span class="up">↑8%</span></span></div>
+        <div class="cm"><span class="cm-k">差评率</span><span class="cm-v">4.8% <span class="dn">↑1.8pp</span></span></div>
+        <div class="cm"><span class="cm-k">退货金额</span><span class="cm-v">¥8.4万 <span class="dn">↑18%</span></span></div>
+        <div class="cm"><span class="cm-k">退货率</span><span class="cm-v">12.3% <span class="dn">↑2.8pp</span></span></div>
+        <div class="tag-row"><span class="s ok">✅ 评论数</span><span class="s bad">❌ 差评/退货</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">产品全链路健康度诊断明细</div>
+  <div class="card">
+    <div class="card-body">
+      <table class="tbl">
+        <thead><tr><th>环节</th><th>诊断维度</th><th>关键指标</th><th>基准值</th><th>当前值</th><th>环比</th><th>状态</th><th>建议动作</th></tr></thead>
+        <tbody>
+          <tr><td class="dim" rowspan="7" style="color:#4361ee">营销端</td><td>投资金额</td><td>营销花费</td><td>¥112,000</td><td>¥125,800</td><td class="up">↑12%</td><td><span class="s ok">✅ 达标</span></td><td>—</td></tr>
+          <tr><td rowspan="4">内容声量</td><td>内容曝光量</td><td>2,550万</td><td>2,340万</td><td class="dn">↓8%</td><td><span class="s bad">❌ 未达</span></td><td>增加投流预算，增加达人合作数量</td></tr>
+          <tr><td>有曝光内容数</td><td>998条</td><td>847条</td><td class="dn">↓15%</td><td><span class="s bad">❌ 未达</span></td><td>批量生产混剪，多账号分发</td></tr>
+          <tr><td>新发布内容占比</td><td>25%</td><td>18%</td><td class="dn">↓7pp</td><td><span class="s bad">❌ 未达</span></td><td>制定内容日历，强制周更</td></tr>
+          <tr><td>UGC占比</td><td>40%</td><td>32%</td><td class="dn">↓8pp</td><td><span class="s bad">❌ 未达</span></td><td>发起UGC话题挑战，激励用户投稿</td></tr>
+          <tr><td rowspan="2">内容质量</td><td>篇均曝光量</td><td>31,000</td><td>27,600</td><td class="dn">↓11%</td><td><span class="s bad">❌ 未达</span></td><td>优化前3秒完播率，改标题/封面</td></tr>
+          <tr><td>篇均互动量</td><td>1,360</td><td>1,240</td><td class="dn">↓9%</td><td><span class="s bad">❌ 未达</span></td><td>分析高互动竞品，重构内容钩子</td></tr>
+          <tr><td class="dim" rowspan="5" style="color:#805ad5">搜索心智</td><td>搜索热度</td><td>产品词搜索次数</td><td>43,000</td><td>45,200</td><td class="up">↑5%</td><td><span class="s ok">✅ 达标</span></td><td>—</td></tr>
+          <tr><td rowspan="3">搜索效率</td><td>搜索成交金额</td><td>¥101,600</td><td>¥89,400</td><td class="dn">↓12%</td><td><span class="s bad">❌ 未达</span></td><td>检查搜索量 vs 转化率低原因</td></tr>
+          <tr><td>搜索转化率</td><td>4.0%</td><td>3.2%</td><td class="dn">↓0.8pp</td><td><span class="s bad">❌ 未达</span></td><td>优化主图/标题/价格/核心卖点</td></tr>
+          <tr><td>搜索GPMS</td><td>¥2,360</td><td>¥1,978</td><td class="dn">↓16%</td><td><span class="s bad">❌ 未达</span></td><td>优化搜索结果页主图，投搜索卡位</td></tr>
+          <tr><td>种草-搜索效率</td><td>内容触达搜索率</td><td>0.24%</td><td>0.19%</td><td class="dn">↓0.05pp</td><td><span class="s bad">❌ 未达</span></td><td>视频强化小蓝词，评论区引导搜索</td></tr>
+          <tr><td class="dim" rowspan="7" style="color:#2c7a7b">EC承接</td><td rowspan="3">流量规模</td><td>商品曝光人数</td><td>164万</td><td>156万</td><td class="dn">↓5%</td><td><span class="s bad">❌ 未达</span></td><td>提升直播讲解时长，增加商城参与度</td></tr>
+          <tr><td>商品点击人数</td><td>9.6万</td><td>8.9万</td><td class="dn">↓7%</td><td><span class="s bad">❌ 未达</span></td><td>提升曝光位置 + 增加内容挂载</td></tr>
+          <tr><td>商品购买人数</td><td>2,978</td><td>2,340</td><td class="dn">↓21%</td><td><span class="s bad">❌ 未达</span></td><td>优先解决点击人数不足</td></tr>
+          <tr><td>转化漏斗</td><td>商品点击率</td><td>7.2%</td><td>5.7%</td><td class="dn">↓1.5pp</td><td><span class="s bad">❌ 未达</span></td><td>商品头图/标题优化；话术引导点击</td></tr>
+          <tr><td>转化漏斗</td><td>商品购买率</td><td>3.1%</td><td>2.6%</td><td class="dn">↓0.5pp</td><td><span class="s bad">❌ 未达</span></td><td>加强逼单话术，强化价格优势</td></tr>
+          <tr><td rowspan="2">销售结果</td><td>商品销售金额</td><td>¥73.5万</td><td>¥68.4万</td><td class="dn">↓7%</td><td><span class="s bad">❌ 未达</span></td><td>把握核心渠道，渗透其他场景</td></tr>
+          <tr><td>商品件单价</td><td>¥292</td><td>¥292</td><td class="nt">→ 0%</td><td><span class="s ok">✅ 稳定</span></td><td>—</td></tr>
+          <tr><td class="dim" rowspan="4" style="color:#b7791f">口碑售后</td><td>运营检视</td><td>退货率</td><td>9.5%</td><td>12.3%</td><td class="dn">↑2.8pp</td><td><span class="s bad">❌ 超标</span></td><td>下钻售后看板，分析退货原因</td></tr>
+          <tr><td rowspan="3">评论</td><td>评论数</td><td>1,155</td><td>1,247</td><td class="up">↑8%</td><td><span class="s ok">✅ 达标</span></td><td>—</td></tr>
+          <tr><td>好评率</td><td>94.5%</td><td>92.4%</td><td class="dn">↓2.1pp</td><td><span class="s bad">❌ 下降</span></td><td>基于差评词云驱动产品改进</td></tr>
+          <tr><td>差评率</td><td>3.0%</td><td>4.8%</td><td class="dn">↑1.8pp</td><td><span class="s bad">❌ 超标</span></td><td>优化详情页，避免预期落差</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sec">商品人群画像诊断</div>
+  <div class="profile-grid">
+    <div class="card">
+      <div class="card-hdr"><div class="card-title">性别 & 年龄</div><div class="card-sub">购买 vs 曝光 人群对比</div></div>
+      <div class="card-body">
+        <table class="tbl">
+          <thead><tr><th>分类</th><th>标签</th><th>购买人群</th><th>曝光人群</th><th>搜索人群</th><th>购买-曝光差异</th></tr></thead>
+          <tbody>
+            <tr><td class="dim" style="color:#4a5568">性别</td><td>女性</td><td>78%</td><td>65%</td><td>71%</td><td class="up">+13pp</td></tr>
+            <tr><td></td><td>男性</td><td>22%</td><td>35%</td><td>29%</td><td class="dn">-13pp</td></tr>
+            <tr><td class="dim" style="color:#4a5568">年龄</td><td>18-23</td><td>12%</td><td>18%</td><td>15%</td><td class="dn">-6pp</td></tr>
+            <tr><td></td><td>24-30</td><td>35%</td><td>28%</td><td>31%</td><td class="up">+7pp</td></tr>
+            <tr><td></td><td>31-40</td><td>38%</td><td>32%</td><td>36%</td><td class="up">+6pp</td></tr>
+            <tr><td></td><td>41-50</td><td>12%</td><td>17%</td><td>14%</td><td class="dn">-5pp</td></tr>
+            <tr><td></td><td>50+</td><td>3%</td><td>5%</td><td>4%</td><td class="dn">-2pp</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="card-title">消费等级 & 快消人群</div><div class="card-sub">购买 vs 曝光 人群对比</div></div>
+      <div class="card-body">
+        <table class="tbl">
+          <thead><tr><th>分类</th><th>标签</th><th>购买人群</th><th>曝光人群</th><th>购买-曝光差异</th></tr></thead>
+          <tbody>
+            <tr><td class="dim" style="color:#4a5568">消费等级</td><td>高消费</td><td>42%</td><td>28%</td><td class="up">+14pp</td></tr>
+            <tr><td></td><td>中消费</td><td>45%</td><td>48%</td><td class="dn">-3pp</td></tr>
+            <tr><td></td><td>低消费</td><td>13%</td><td>24%</td><td class="dn">-11pp</td></tr>
+            <tr><td class="dim" style="color:#4a5568">快消人群</td><td>新锐白领</td><td>28%</td><td>21%</td><td class="up">+7pp</td></tr>
+            <tr><td></td><td>精致妈妈</td><td>22%</td><td>18%</td><td class="up">+4pp</td></tr>
+            <tr><td></td><td>资深中产</td><td>18%</td><td>14%</td><td class="up">+4pp</td></tr>
+            <tr><td></td><td>Gen Z</td><td>14%</td><td>22%</td><td class="dn">-8pp</td></tr>
+            <tr><td></td><td>小镇青年</td><td>10%</td><td>15%</td><td class="dn">-5pp</td></tr>
+            <tr><td></td><td>都市蓝领</td><td>8%</td><td>10%</td><td class="dn">-2pp</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 营销端 ==================== -->
+<div class="panel" id="p-mk">
+  <div class="sec">核心指标概览</div>
+  <div class="kpi-grid">
+    <div class="kpi ok"><div class="kpi-lbl">营销花费</div><div class="kpi-val">¥12.6万</div><div class="kpi-row"><span class="kpi-trend up-g">↑ +12% 环比</span></div><div class="kpi-base">基准值 ¥11.2万</div><div class="kpi-note">投入够不够？花得值不值？</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">内容曝光量</div><div class="kpi-val">2,340万</div><div class="kpi-row"><span class="kpi-trend dn-b">↓ -8% 环比</span></div><div class="kpi-base">基准值 2,550万</div><div class="kpi-note">内容有没有被看到？</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">有曝光内容数</div><div class="kpi-val sm">847 条</div><div class="kpi-row"><span class="kpi-trend dn-b">↓ -15% 环比</span></div><div class="kpi-base">基准值 998条</div><div class="kpi-note">内容数够不够厚？</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">新发布内容占比</div><div class="kpi-val">18%</div><div class="kpi-row"><span class="kpi-trend dn-b">↓ -7pp 环比</span></div><div class="kpi-base">基准值 25%</div><div class="kpi-note">内容是否老化？</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">UGC占比</div><div class="kpi-val">32%</div><div class="kpi-row"><span class="kpi-trend dn-b">↓ -8pp 环比</span></div><div class="kpi-base">基准值 40%</div><div class="kpi-note">是否过度依赖付费？</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">篇均曝光量</div><div class="kpi-val sm">2.76万</div><div class="kpi-row"><span class="kpi-trend dn-b">↓ -11% 环比</span></div><div class="kpi-base">基准值 3.1万</div><div class="kpi-note">内容分发效率高吗？</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">篇均互动量</div><div class="kpi-val sm">1,240</div><div class="kpi-row"><span class="kpi-trend dn-b">↓ -9% 环比</span></div><div class="kpi-base">基准值 1,360</div><div class="kpi-note">内容吸引力强吗？</div></div>
+  </div>
+
+  <div class="sec">内容营销投资情况（渠道花费 & ROI）</div>
+  <div class="card">
+    <div class="card-body">
+      <table class="tbl">
+        <thead><tr><th>渠道</th><th>消耗金额</th><th>环比</th><th>占比</th><th>CPM</th><th>直接成交金额</th><th>直接支付ROI</th><th>ROI基准</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td>千川推商品-短视频</td><td>¥4.2万</td><td class="up">↑8%</td><td>33.4%</td><td>¥18.5</td><td>¥21.2万</td><td>5.05</td><td>4.5</td><td><span class="s ok">✅ 达标</span></td></tr>
+          <tr><td>千川推直播间-短视频</td><td>¥3.1万</td><td class="up">↑15%</td><td>24.6%</td><td>¥22.1</td><td>¥14.8万</td><td>4.77</td><td>4.0</td><td><span class="s ok">✅ 达标</span></td></tr>
+          <tr class="hl"><td>内容热推</td><td>¥2.4万</td><td class="dn">↓5%</td><td>19.1%</td><td>¥35.2</td><td>¥5.3万</td><td>2.21</td><td>3.5</td><td><span class="s bad">❌ ROI低</span></td></tr>
+          <tr class="hl"><td>种草通合约</td><td>¥1.8万</td><td class="dn">↓12%</td><td>14.3%</td><td>¥41.8</td><td>¥3.2万</td><td>1.78</td><td>3.0</td><td><span class="s bad">❌ ROI低</span></td></tr>
+          <tr class="hl"><td>DOU+</td><td>¥1.1万</td><td class="dn">↓3%</td><td>8.7%</td><td>¥28.4</td><td>¥1.9万</td><td>1.73</td><td>2.5</td><td><span class="s bad">❌ ROI低</span></td></tr>
+          <tr class="total"><td colspan="2">合计</td><td class="dn">↑12%</td><td>100%</td><td>¥26.4</td><td>¥46.4万</td><td>3.68</td><td>3.8</td><td><span class="s warn">⚠️ 略低</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sec">内容结构与来源分析（数量 × 质量）</div>
+  <div class="card">
+    <div class="card-body">
+      <table class="tbl">
+        <thead><tr><th>渠道</th><th>曝光量</th><th>曝光占比</th><th>曝光状态</th><th>互动量</th><th>互动占比</th><th>互动状态</th><th>有曝光内容数</th><th>内容数状态</th><th>篇均曝光</th><th>篇均互动</th></tr></thead>
+        <tbody>
+          <tr><td>千川推商品-短视频</td><td>720万</td><td>30.8%</td><td><span class="s ok">✅</span></td><td>32,400</td><td>28.5%</td><td><span class="s ok">✅</span></td><td>186</td><td><span class="s ok">✅</span></td><td>3.87万</td><td>174</td></tr>
+          <tr><td>千川推直播间-短视频</td><td>580万</td><td>24.8%</td><td><span class="s ok">✅</span></td><td>24,100</td><td>21.2%</td><td><span class="s ok">✅</span></td><td>152</td><td><span class="s ok">✅</span></td><td>3.82万</td><td>159</td></tr>
+          <tr class="hl"><td>自然内容</td><td>340万</td><td>14.5%</td><td><span class="s bad">❌</span></td><td>28,900</td><td>25.4%</td><td><span class="s ok">✅</span></td><td>198</td><td><span class="s bad">❌</span></td><td>1.72万</td><td>146</td></tr>
+          <tr class="hl"><td>星图达人视频</td><td>280万</td><td>12.0%</td><td><span class="s bad">❌</span></td><td>18,200</td><td>16.0%</td><td><span class="s bad">❌</span></td><td>124</td><td><span class="s bad">❌</span></td><td>2.26万</td><td>147</td></tr>
+          <tr><td>企业号视频</td><td>210万</td><td>9.0%</td><td><span class="s ok">✅</span></td><td>8,400</td><td>7.4%</td><td><span class="s ok">✅</span></td><td>96</td><td><span class="s ok">✅</span></td><td>2.19万</td><td>88</td></tr>
+          <tr class="hl"><td>内容热推</td><td>120万</td><td>5.1%</td><td><span class="s bad">❌</span></td><td>1,800</td><td>1.6%</td><td><span class="s bad">❌</span></td><td>54</td><td><span class="s bad">❌</span></td><td>2.22万</td><td>33</td></tr>
+          <tr class="hl"><td>种草通合约</td><td>60万</td><td>2.6%</td><td><span class="s bad">❌</span></td><td>960</td><td>0.8%</td><td><span class="s bad">❌</span></td><td>28</td><td><span class="s bad">❌</span></td><td>2.14万</td><td>34</td></tr>
+          <tr class="total"><td colspan="2">合计</td><td>100%</td><td>—</td><td>115,440</td><td>100%</td><td>—</td><td>847</td><td>—</td><td>2.76万</td><td>136</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sec">内容老化分析</div>
+  <div class="card">
+    <div class="card-body">
+      <table class="tbl">
+        <thead><tr><th>渠道</th><th>有曝光内容数</th><th>新发布内容数</th><th>新发布占比</th><th>基准值</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td>企业号视频</td><td>96</td><td>28</td><td>29.2%</td><td>25%</td><td><span class="s ok">✅ 达标</span></td></tr>
+          <tr class="hl"><td>自然内容</td><td>198</td><td>18</td><td>9.1%</td><td>25%</td><td><span class="s bad">❌ 严重老化</span></td></tr>
+          <tr class="hl"><td>星图达人视频</td><td>124</td><td>16</td><td>12.9%</td><td>20%</td><td><span class="s bad">❌ 老化</span></td></tr>
+          <tr><td>千川推商品-短视频</td><td>186</td><td>52</td><td>28.0%</td><td>25%</td><td><span class="s ok">✅ 达标</span></td></tr>
+          <tr><td>千川推直播间-短视频</td><td>152</td><td>44</td><td>28.9%</td><td>25%</td><td><span class="s ok">✅ 达标</span></td></tr>
+          <tr class="hl"><td>内容热推</td><td>54</td><td>6</td><td>11.1%</td><td>20%</td><td><span class="s bad">❌ 老化</span></td></tr>
+          <tr class="hl"><td>种草通合约</td><td>28</td><td>2</td><td>7.1%</td><td>20%</td><td><span class="s bad">❌ 严重老化</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 搜索心智 ==================== -->
+<div class="panel" id="p-sr">
+  <div class="sec">核心指标概览</div>
+  <div class="kpi-grid">
+    <div class="kpi ok"><div class="kpi-lbl">产品词搜索次数</div><div class="kpi-val">4.52万</div><div class="kpi-row"><span class="kpi-trend up-g">↑ +5% 环比</span></div><div class="kpi-base">基准值 4.3万</div><div class="kpi-note">有没有人搜？</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">看后搜人数</div><div class="kpi-val sm">8,640</div><div class="kpi-row"><span class="kpi-trend dn-b">↓ -14% 环比</span></div><div class="kpi-base">基准值 10,050</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">搜索成交金额</div><div class="kpi-val">¥8.9万</div><div class="kpi-row"><span class="kpi-trend dn-b">↓ -12% 环比</span></div><div class="kpi-base">基准值 ¥10.2万</div><div class="kpi-note">搜了有没有买？</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">搜索客单价</div><div class="kpi-val">¥285</div><div class="kpi-row"><span class="kpi-trend dn-b">↓ -4% 环比</span></div><div class="kpi-base">基准值 ¥297</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">搜索转化率</div><div class="kpi-val">3.2%</div><div class="kpi-row"><span class="kpi-trend dn-b">↓ -0.8pp</span></div><div class="kpi-base">基准值 4.0%</div><div class="kpi-note">搜索转化效率？</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">搜索GPMS</div><div class="kpi-val sm">¥1,978</div><div class="kpi-row"><span class="kpi-trend dn-b">↓ -16% 环比</span></div><div class="kpi-base">基准值 ¥2,360</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">内容触达搜索率</div><div class="kpi-val">0.19%</div><div class="kpi-row"><span class="kpi-trend dn-b">↓ -0.05pp</span></div><div class="kpi-base">基准值 0.24%</div><div class="kpi-note">内容是否激发搜索？</div></div>
+  </div>
+
+  <div class="sec">TOP 10 产品搜索词监控</div>
+  <div class="card">
+    <div class="card-body">
+      <table class="tbl">
+        <thead><tr><th>排名</th><th>搜索词</th><th>搜索次数</th><th>环比</th><th>搜索人数</th><th>成交人数</th><th>成交金额</th><th>成交金额环比</th><th>搜索GPMS</th></tr></thead>
+        <tbody>
+          <tr><td><span class="bk bk1">TOP 1</span></td><td>XX面霜</td><td>12,400</td><td class="up">↑8%</td><td>9,840</td><td>392</td><td>¥18,670</td><td class="up">↑3%</td><td>¥1,505</td></tr>
+          <tr><td><span class="bk bk2">TOP 2</span></td><td>XX补水面霜</td><td>8,600</td><td class="up">↑12%</td><td>6,880</td><td>258</td><td>¥12,310</td><td class="up">↑6%</td><td>¥1,431</td></tr>
+          <tr><td><span class="bk bk3">TOP 3</span></td><td>XX美白面霜</td><td>6,200</td><td class="dn">↓5%</td><td>5,240</td><td>168</td><td>¥8,000</td><td class="dn">↓9%</td><td>¥1,290</td></tr>
+          <tr class="hl"><td><span class="bk bk4">TOP 4</span></td><td>XX抗老面霜</td><td>5,400</td><td class="dn">↓18%</td><td>4,320</td><td>86</td><td>¥4,095</td><td class="dn">↓24%</td><td>¥758</td></tr>
+          <tr><td><span class="bk bk4">TOP 5</span></td><td>XX保湿霜</td><td>4,100</td><td class="up">↑4%</td><td>3,280</td><td>124</td><td>¥5,900</td><td class="up">↑2%</td><td>¥1,439</td></tr>
+          <tr><td><span class="bk bk4">TOP 6</span></td><td>XX面霜敏感肌</td><td>2,800</td><td class="up">↑22%</td><td>2,240</td><td>84</td><td>¥4,000</td><td class="up">↑18%</td><td>¥1,429</td></tr>
+          <tr class="hl"><td><span class="bk bk4">TOP 7</span></td><td>XX面霜成分</td><td>2,100</td><td class="dn">↓8%</td><td>1,680</td><td>21</td><td>¥998</td><td class="dn">↓15%</td><td>¥475</td></tr>
+          <tr><td><span class="bk bk4">TOP 8</span></td><td>XX面霜多少钱</td><td>1,600</td><td class="up">↑5%</td><td>1,280</td><td>48</td><td>¥2,285</td><td class="up">↑3%</td><td>¥1,428</td></tr>
+          <tr><td><span class="bk bk4">TOP 9</span></td><td>XX品牌面霜</td><td>1,200</td><td class="nt">→ 0%</td><td>960</td><td>29</td><td>¥1,380</td><td class="dn">↓2%</td><td>¥1,150</td></tr>
+          <tr><td><span class="bk bk4">TOP 10</span></td><td>XX面霜正品</td><td>800</td><td class="up">↑10%</td><td>640</td><td>20</td><td>¥952</td><td class="up">↑8%</td><td>¥1,190</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sec">核心搜索引流触点分析</div>
+  <div class="card">
+    <div class="card-body">
+      <table class="tbl">
+        <thead><tr><th>触点</th><th>搜索次数</th><th>搜索占比</th><th>触达-搜索率</th><th>搜索率基准</th><th>搜索率状态</th><th>搜索成交金额</th><th>搜索-成交率</th><th>成交率状态</th></tr></thead>
+        <tbody>
+          <tr><td>千川短视频</td><td>14,200</td><td>31.4%</td><td>0.31%</td><td>0.28%</td><td><span class="s ok">✅ 达标</span></td><td>¥28,540</td><td>4.6%</td><td><span class="s ok">✅ 达标</span></td></tr>
+          <tr><td>千川直播带货</td><td>7,100</td><td>15.7%</td><td>0.24%</td><td>0.22%</td><td><span class="s ok">✅ 达标</span></td><td>¥14,200</td><td>4.6%</td><td><span class="s ok">✅ 达标</span></td></tr>
+          <tr class="hl"><td>企业号视频</td><td>8,400</td><td>18.6%</td><td>0.21%</td><td>0.28%</td><td><span class="s bad">❌ 偏低</span></td><td>¥12,600</td><td>3.4%</td><td><span class="s bad">❌ 偏低</span></td></tr>
+          <tr class="hl"><td>自然内容</td><td>6,200</td><td>13.7%</td><td>0.18%</td><td>0.26%</td><td><span class="s bad">❌ 偏低</span></td><td>¥9,300</td><td>3.4%</td><td><span class="s bad">❌ 偏低</span></td></tr>
+          <tr class="hl"><td>星图视频投放</td><td>4,200</td><td>9.3%</td><td>0.15%</td><td>0.24%</td><td><span class="s bad">❌ 偏低</span></td><td>¥5,040</td><td>2.7%</td><td><span class="s bad">❌ 偏低</span></td></tr>
+          <tr class="hl"><td>企业号直播</td><td>3,100</td><td>6.9%</td><td>0.12%</td><td>0.20%</td><td><span class="s bad">❌ 偏低</span></td><td>¥4,340</td><td>3.2%</td><td><span class="s bad">❌ 偏低</span></td></tr>
+          <tr class="hl"><td>种草通合约</td><td>2,000</td><td>4.4%</td><td>0.33%</td><td>0.35%</td><td><span class="s warn">⚠️ 略低</span></td><td>¥2,600</td><td>3.0%</td><td><span class="s warn">⚠️ 略低</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== EC承接 ==================== -->
+<div class="panel" id="p-ec">
+  <div class="sec">核心指标概览</div>
+  <div class="kpi-grid">
+    <div class="kpi bad"><div class="kpi-lbl">商品曝光人数</div><div class="kpi-val">156万</div><div class="kpi-row"><span class="kpi-trend dn-b">↓ -5% 环比</span></div><div class="kpi-base">基准值 164万</div><div class="kpi-note">流量够不够？</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">商品点击人数</div><div class="kpi-val sm">8.9万</div><div class="kpi-row"><span class="kpi-trend dn-b">↓ -7% 环比</span></div><div class="kpi-base">基准值 9.6万</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">商品购买人数</div><div class="kpi-val sm">2,340</div><div class="kpi-row"><span class="kpi-trend dn-b">↓ -21% 环比</span></div><div class="kpi-base">基准值 2,978</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">内容→商品曝光率</div><div class="kpi-val">6.7%</div><div class="kpi-row"><span class="kpi-trend dn-b">↓ -1.1pp</span></div><div class="kpi-base">基准值 7.8%</div><div class="kpi-note">商品入口够不够？</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">商品点击率</div><div class="kpi-val">5.7%</div><div class="kpi-row"><span class="kpi-trend dn-b">↓ -1.5pp</span></div><div class="kpi-base">基准值 7.2%</div><div class="kpi-note">转化行不行？</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">商品购买率</div><div class="kpi-val">2.6%</div><div class="kpi-row"><span class="kpi-trend dn-b">↓ -0.5pp</span></div><div class="kpi-base">基准值 3.1%</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">商品销售金额</div><div class="kpi-val">¥68.4万</div><div class="kpi-row"><span class="kpi-trend dn-b">↓ -7% 环比</span></div><div class="kpi-base">基准值 ¥73.5万</div><div class="kpi-note">最终生意达标吗？</div></div>
+    <div class="kpi ok"><div class="kpi-lbl">商品件单价</div><div class="kpi-val">¥292</div><div class="kpi-row"><span class="kpi-trend neu">→ 稳定</span></div><div class="kpi-base">基准值 ¥292</div></div>
+  </div>
+
+  <div class="sec">生意渠道贡献分析</div>
+  <div class="card">
+    <div class="card-body">
+      <table class="tbl">
+        <thead><tr><th>分类</th><th>渠道</th><th>销售额</th><th>环比</th><th>基准值</th><th>状态</th><th>销售额占比</th><th>商品销量</th><th>件单价</th></tr></thead>
+        <tbody>
+          <tr><td rowspan="3" style="color:#4a5568;font-weight:500">销售渠道</td><td>直播间</td><td>¥38.2万</td><td class="dn">↓5%</td><td>¥41.0万</td><td><span class="s bad">❌ 未达</span></td><td>55.8%</td><td>1,308</td><td>¥292</td></tr>
+          <tr><td>商品卡</td><td>¥18.6万</td><td class="dn">↓9%</td><td>¥20.4万</td><td><span class="s bad">❌ 未达</span></td><td>27.2%</td><td>637</td><td>¥292</td></tr>
+          <tr><td>短视频</td><td>¥11.6万</td><td class="dn">↓8%</td><td>¥12.6万</td><td><span class="s bad">❌ 未达</span></td><td>17.0%</td><td>397</td><td>¥292</td></tr>
+          <tr><td rowspan="2" style="color:#4a5568;font-weight:500">带货方式</td><td>自营</td><td>¥44.5万</td><td class="dn">↓6%</td><td>¥47.8万</td><td><span class="s bad">❌ 未达</span></td><td>65.1%</td><td>1,524</td><td>¥292</td></tr>
+          <tr><td>达人</td><td>¥23.9万</td><td class="dn">↓9%</td><td>¥26.2万</td><td><span class="s bad">❌ 未达</span></td><td>34.9%</td><td>819</td><td>¥292</td></tr>
+          <tr class="total"><td colspan="2">合计</td><td>¥68.4万</td><td class="dn">↓7%</td><td>¥73.5万</td><td><span class="s bad">❌ 未达</span></td><td>100%</td><td>2,342</td><td>¥292</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sec">转化漏斗分析</div>
+  <div class="funnel-grid">
+    <div class="card">
+      <div class="card-hdr"><div class="card-title">整体转化漏斗</div></div>
+      <div class="funnel">
+        <div class="f-row"><div class="f-lbl">商品曝光</div><div class="f-wrap"><div class="f-bar" style="width:100%;background:#6b8cde">156万人</div></div><div class="f-rt"><span class="s warn">→ 基准</span></div></div>
+        <div class="f-row"><div class="f-lbl">商品点击</div><div class="f-wrap"><div class="f-bar" style="width:57%;background:#4f72ce">8.9万人</div></div><div class="f-rt"><span class="s bad">❌ 5.7%↓</span></div></div>
+        <div class="f-row"><div class="f-lbl">商品加购</div><div class="f-wrap"><div class="f-bar" style="width:35%;background:#3b5dc0">5.4万人</div></div><div class="f-rt" style="color:#8896ae;font-size:10px">加购率 62%</div></div>
+        <div class="f-row"><div class="f-lbl">商品购买</div><div class="f-wrap"><div class="f-bar" style="width:15%;background:#2d4eb5">2,340人</div></div><div class="f-rt"><span class="s bad">❌ 2.6%↓</span></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="card-title">直播间转化漏斗</div></div>
+      <div class="funnel">
+        <div class="f-row"><div class="f-lbl">商品曝光</div><div class="f-wrap"><div class="f-bar" style="width:100%;background:#68c49a">86.2万人</div></div><div class="f-rt" style="color:#8896ae;font-size:10px">占比 55%</div></div>
+        <div class="f-row"><div class="f-lbl">商品点击</div><div class="f-wrap"><div class="f-bar" style="width:51%;background:#48b080">4.4万人</div></div><div class="f-rt"><span class="s bad">❌ 5.1%↓</span></div></div>
+        <div class="f-row"><div class="f-lbl">商品加购</div><div class="f-wrap"><div class="f-bar" style="width:30%;background:#339e6b">2.6万人</div></div><div class="f-rt" style="color:#8896ae;font-size:10px">加购率 59%</div></div>
+        <div class="f-row"><div class="f-lbl">商品购买</div><div class="f-wrap"><div class="f-bar" style="width:13%;background:#258f5c">1,308人</div></div><div class="f-rt"><span class="s bad">❌ 3.0%↓</span></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="card-title">商品卡转化漏斗</div></div>
+      <div class="funnel">
+        <div class="f-row"><div class="f-lbl">商品曝光</div><div class="f-wrap"><div class="f-bar" style="width:100%;background:#f4a56a">42.1万人</div></div><div class="f-rt" style="color:#8896ae;font-size:10px">占比 27%</div></div>
+        <div class="f-row"><div class="f-lbl">商品点击</div><div class="f-wrap"><div class="f-bar" style="width:60%;background:#ed8c4a">2.5万人</div></div><div class="f-rt"><span class="s ok">✅ 6.0%</span></div></div>
+        <div class="f-row"><div class="f-lbl">商品加购</div><div class="f-wrap"><div class="f-bar" style="width:36%;background:#e5762e">1.5万人</div></div><div class="f-rt" style="color:#8896ae;font-size:10px">加购率 61%</div></div>
+        <div class="f-row"><div class="f-lbl">商品购买</div><div class="f-wrap"><div class="f-bar" style="width:18%;background:#d96018">637人</div></div><div class="f-rt"><span class="s warn">⚠️ 2.5%</span></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="card-title">短视频转化漏斗</div></div>
+      <div class="funnel">
+        <div class="f-row"><div class="f-lbl">商品曝光</div><div class="f-wrap"><div class="f-bar" style="width:100%;background:#b993e8">27.7万人</div></div><div class="f-rt" style="color:#8896ae;font-size:10px">占比 18%</div></div>
+        <div class="f-row"><div class="f-lbl">商品点击</div><div class="f-wrap"><div class="f-bar" style="width:58%;background:#a77cdf">1.6万人</div></div><div class="f-rt"><span class="s warn">⚠️ 5.8%</span></div></div>
+        <div class="f-row"><div class="f-lbl">商品加购</div><div class="f-wrap"><div class="f-bar" style="width:36%;background:#9868d6">1.0万人</div></div><div class="f-rt" style="color:#8896ae;font-size:10px">加购率 63%</div></div>
+        <div class="f-row"><div class="f-lbl">商品购买</div><div class="f-wrap"><div class="f-bar" style="width:14%;background:#8b58cc">397人</div></div><div class="f-rt"><span class="s warn">⚠️ 2.5%</span></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 口碑售后 ==================== -->
+<div class="panel" id="p-af">
+  <div class="sec">核心指标概览</div>
+  <div class="kpi-grid">
+    <div class="kpi ok"><div class="kpi-lbl">评论数</div><div class="kpi-val sm">1,247</div><div class="kpi-row"><span class="kpi-trend up-g">↑ +8% 环比</span></div><div class="kpi-base">基准值 1,155</div><div class="kpi-note">用户愿不愿发声？</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">差评率</div><div class="kpi-val">4.8%</div><div class="kpi-row"><span class="kpi-trend up-b">↑ +1.8pp</span></div><div class="kpi-base">基准值 3.0%</div><div class="kpi-note">用户是否满意？</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">好评率</div><div class="kpi-val">92.4%</div><div class="kpi-row"><span class="kpi-trend dn-b">↓ -2.1pp</span></div><div class="kpi-base">基准值 94.5%</div></div>
+    <div class="kpi ok"><div class="kpi-lbl">销售金额</div><div class="kpi-val">¥68.4万</div><div class="kpi-row"><span class="kpi-trend dn-b">↓ -7%</span></div><div class="kpi-base">基准值 ¥73.5万</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">退货金额</div><div class="kpi-val">¥8.4万</div><div class="kpi-row"><span class="kpi-trend up-b">↑ +18% 环比</span></div><div class="kpi-base">基准值 ¥7.0万</div><div class="kpi-note">售后是否侵蚀利润？</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">退货率</div><div class="kpi-val">12.3%</div><div class="kpi-row"><span class="kpi-trend up-b">↑ +2.8pp</span></div><div class="kpi-base">基准值 9.5%</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">发货前退货率</div><div class="kpi-val">4.2%</div><div class="kpi-row"><span class="kpi-trend up-b">↑ +0.8pp</span></div><div class="kpi-base">基准值 3.4%</div><div class="kpi-note">退货发生在哪个阶段？</div></div>
+    <div class="kpi bad"><div class="kpi-lbl">发货后退货率</div><div class="kpi-val">8.1%</div><div class="kpi-row"><span class="kpi-trend up-b">↑ +2.0pp</span></div><div class="kpi-base">基准值 6.1%</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div>
+      <div class="sec">差评原因 TOP 分析</div>
+      <div class="card">
+        <div class="card-body">
+          <table class="tbl">
+            <thead><tr><th>差评标签</th><th>出现次数</th><th>占比</th></tr></thead>
+            <tbody>
+              <tr class="hl"><td>味道 / 气味问题</td><td>24</td><td>40.0%</td></tr>
+              <tr class="hl"><td>效果不如预期</td><td>18</td><td>30.0%</td></tr>
+              <tr><td>包装破损</td><td>8</td><td>13.3%</td></tr>
+              <tr><td>过敏 / 刺激肌肤</td><td>6</td><td>10.0%</td></tr>
+              <tr><td>性价比低</td><td>4</td><td>6.7%</td></tr>
+              <tr class="total"><td>合计</td><td>60</td><td>100%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="sec">退货原因分析</div>
+      <div class="card">
+        <div class="card-body">
+          <table class="tbl">
+            <thead><tr><th>大类</th><th>具体原因</th><th>退货率</th><th>退货金额</th><th>发货前</th><th>发货后</th></tr></thead>
+            <tbody>
+              <tr class="hl"><td>产品问题</td><td>效果不符预期</td><td>4.1%</td><td>¥2.8万</td><td>—</td><td>4.1%</td></tr>
+              <tr class="hl"><td>产品问题</td><td>味道 / 气味</td><td>2.8%</td><td>¥1.9万</td><td>—</td><td>2.8%</td></tr>
+              <tr><td>用户问题</td><td>冲动消费</td><td>2.1%</td><td>¥1.4万</td><td>2.1%</td><td>—</td></tr>
+              <tr><td>用户问题</td><td>收到不合适</td><td>1.4%</td><td>¥0.9万</td><td>—</td><td>1.4%</td></tr>
+              <tr><td>服务问题</td><td>客服响应慢</td><td>0.8%</td><td>¥0.5万</td><td>0.3%</td><td>0.5%</td></tr>
+              <tr><td>服务问题</td><td>售后解决不满意</td><td>0.7%</td><td>¥0.5万</td><td>—</td><td>0.7%</td></tr>
+              <tr><td>物流问题</td><td>包装破损</td><td>0.4%</td><td>¥0.4万</td><td>—</td><td>0.4%</td></tr>
+              <tr class="total"><td colspan="2">合计</td><td>12.3%</td><td>¥8.4万</td><td>4.2%</td><td>8.1%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+const tabs=['ov','mk','sr','ec','af'];
+function go(id){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===id));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='p-'+id));
+}
+</script>
+</body>
+</html>
